@@ -18,7 +18,7 @@
 ## GitHub Pages で公開する
 
 リポジトリの Settings → Pages で、Branch を `main`、フォルダを `/docs` にして Save します。
-公開アドレスは `https://<ユーザー名>.github.io/hatoma-dictionary/` です。
+公開アドレスは `https://nakagawanatuko.github.io/hatoma-dictionary/` です。
 
 ## フォルダ構成
 
