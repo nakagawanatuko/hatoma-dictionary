@@ -3,6 +3,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Noto+Sans:wght@400;600&display=swap">
 <style>
+@font-face { font-family: "Doulos SIL"; src: url("fonts/DoulosSIL-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Charis SIL"; src: url("fonts/Charis-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 /* Layout: search header on top; below it a word list (kana/category browse band + rows with play buttons)
    beside a detail pane. Teal marks the dialect side, pink marks the standard-Japanese side. */
 :root {
@@ -21,8 +23,8 @@
   --shadow: 0 1px 2px rgba(17, 39, 45, .06), 0 6px 20px rgba(17, 39, 45, .06);
   --f-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
   --f-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --f-ipa: "Noto Sans", "Charis SIL", "Gentium Plus", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
-  --f-accent: "Zen Maru Gothic", "Noto Sans", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  --f-ipa: "Doulos SIL", "Charis SIL", "Noto Sans", "Gentium Plus", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  --f-accent: "Zen Maru Gothic", "Doulos SIL", "Noto Sans", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -99,7 +101,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   width: 52px; height: 58px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); display: grid; place-content: center; gap: 0; text-align: center; padding: 0;
 }
 .tile b { font: 900 22px/1.1 var(--f-display); display: block; }
-.tile small { font: 600 11px/1.2 var(--f-ipa); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile small { font: 400 11px/1.2 var(--f-ipa); color: var(--muted); font-variant-numeric: tabular-nums; }
 .tile:hover:not(:disabled) { border-color: var(--dir); }
 .tile[aria-pressed="true"] { background: var(--dir); border-color: var(--dir); color: var(--on-dir); }
 .tile[aria-pressed="true"] small { color: inherit; opacity: .85; }
@@ -108,7 +110,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tiles.sub .tile b { font-size: 18px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip-btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 4px 12px; font: 500 14px/1.5 var(--f-body); display: inline-flex; gap: 6px; align-items: baseline; }
-.chip-btn i { font: 600 12px var(--f-ipa); font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip-btn i { font: 400 12px var(--f-ipa); font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; }
 .chip-btn:hover { border-color: var(--dir); }
 .chip-btn[aria-pressed="true"] { background: var(--dir); border-color: var(--dir); color: var(--on-dir); }
 .chip-btn[aria-pressed="true"] i { color: inherit; opacity: .85; }

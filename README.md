@@ -27,6 +27,7 @@ hatoma-dictionary/
 ├─ docs/                  公開用（GitHub Pages がここを配信）
 │   ├─ index.html           完成品
 │   ├─ data/hatoma-data.js  全件のデータ
+│   ├─ fonts/               IPA用のウェブフォント（Doulos SIL、Charis SIL。OFL）
 │   └─ audio/               任意。mp3を置くと、GitHubより先にこちらを使う
 ├─ source/                元データ
 │   ├─ hatoma.tei                              TEI Lex-0（https://github.com/yf-wang-ninjal/hatoma-dic/tree/main/tei）
