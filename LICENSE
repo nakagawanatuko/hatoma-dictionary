@@ -1,0 +1,16 @@
+鳩間方言辞典アプリ — ライセンスと出典
+
+■ 辞書データ（source/hatoma.tei と、それを変換した data/ および docs/data/）
+  TEI Lex-0版 鳩間方言辞典（国立国語研究所、編集: 王一凡・中川奈津子）
+  ライセンス: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+  https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+■ 音声（このリポジトリには含みません。NINDAのGitHubから読み込みます）
+  見出し語の音声: doi:10.5281/zenodo.4560935（CC BY-SA）
+  例文の音声:     doi:10.5281/zenodo.7100944（CC BY）
+
+■ スクリプト・画面（scripts/、site/、docs/index.html）
+  ライセンス未設定。公開前に決めてください。
+
+※ GitHub に CC BY-SA 4.0 の全文を載せるときは、リポジトリの「Add file」→「Create new file」で
+  ファイル名に LICENSE と入力し、右に出る「Choose a license template」から選べます。

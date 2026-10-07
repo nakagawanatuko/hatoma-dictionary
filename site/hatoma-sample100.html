@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>鳩間方言辞典</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Noto+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: search header on top; below it a word list (kana/category browse band + rows with play buttons)
+   beside a detail pane. Teal marks the dialect side, pink marks the standard-Japanese side. */
+:root {
+  --bg: #EDF3F2;
+  --surface: #FFFFFF;
+  --surface-2: #F4F8F7;
+  --ink: #11272D;
+  --muted: #566F78;
+  --line: #D2E0DE;
+  --dia: #0D6B78;
+  --on-dia: #FFFFFF;
+  --dia-soft: #D9EEEC;
+  --std: #B23A63;
+  --on-std: #FFFFFF;
+  --std-soft: #F8E4EB;
+  --shadow: 0 1px 2px rgba(17, 39, 45, .06), 0 6px 20px rgba(17, 39, 45, .06);
+  --f-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --f-ipa: "Noto Sans", "Charis SIL", "Gentium Plus", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  --f-accent: "Zen Maru Gothic", "Noto Sans", "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09181C; --surface: #10262C; --surface-2: #0C1F24; --ink: #E4F0EE; --muted: #8CA8AF; --line: #22414A;
+    --dia: #52C6D1; --on-dia: #04242A; --dia-soft: #123A41; --std: #F08BAA; --on-std: #2B0F1B; --std-soft: #3B1E2B;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #09181C; --surface: #10262C; --surface-2: #0C1F24; --ink: #E4F0EE; --muted: #8CA8AF; --line: #22414A;
+  --dia: #52C6D1; --on-dia: #04242A; --dia-soft: #123A41; --std: #F08BAA; --on-std: #2B0F1B; --std-soft: #3B1E2B;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 15px/1.7 var(--f-body);
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--dir); outline-offset: 2px; border-radius: 6px; }
+
+.app { --dir: var(--dia); --on-dir: var(--on-dia); --dir-soft: var(--dia-soft); min-height: 100%; display: flex; flex-direction: column; }
+.app[data-mode="std"] { --dir: var(--std); --on-dir: var(--on-std); --dir-soft: var(--std-soft); }
+
+/* ---------- header ---------- */
+.top { background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 16px 16px; position: relative; z-index: 5; }
+.top-in { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; max-width: 1400px; margin: 0 auto; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex: 0 1 auto; min-width: 0; }
+.brand h1 { margin: 0; font: 900 26px/1.2 var(--f-display); color: var(--dia); letter-spacing: .02em; }
+.brand p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.tools { display: flex; align-items: center; gap: 8px; margin-left: auto; order: 2; }
+.search-row { display: flex; flex-wrap: wrap; gap: 10px 14px; flex: 1 1 100%; order: 3; align-items: center; }
+.search { position: relative; flex: 1 1 320px; min-width: 0; max-width: 680px; }
+.search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search input {
+  width: 100%; height: 52px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink);
+  padding: 0 48px 0 46px; font: 500 17px var(--f-body); transition: border-color .15s, background-color .15s;
+}
+.search input::placeholder { color: var(--muted); opacity: .8; }
+.search input:focus { outline: none; border-color: var(--dir); background: var(--surface); }
+.search .clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); display: grid; place-items: center;
+}
+.search .clear:hover { background: var(--dir-soft); color: var(--dir); }
+.modes { display: inline-flex; border: 2px solid var(--line); border-radius: 14px; padding: 3px; background: var(--surface-2); gap: 2px; }
+.modes button { border: 0; background: transparent; padding: 8px 14px; border-radius: 10px; font: 700 14px/1.2 var(--f-display); color: var(--muted); white-space: nowrap; }
+.modes button[aria-pressed="true"] { background: var(--dir); color: var(--on-dir); }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); display: grid; place-items: center; }
+.icon-btn:hover { color: var(--dir); border-color: var(--dir); }
+
+/* ---------- main ---------- */
+.main { flex: 1; display: block; min-height: 0; max-width: 1400px; width: 100%; margin: 0 auto; }
+.listcol { padding: 16px 16px 40px; min-width: 0; }
+
+.browse { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 0; margin-bottom: 16px; }
+.browse > summary { list-style: none; cursor: pointer; padding: 12px 16px; font: 700 14px var(--f-display); color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.browse > summary::-webkit-details-marker { display: none; }
+.browse > summary::after { content: ""; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.browse[open] > summary::after { transform: rotate(-135deg); }
+.browse-body { padding: 4px 16px 16px; display: grid; gap: 16px; }
+.grp-label { font: 700 12.5px var(--f-display); color: var(--muted); margin: 0 0 8px; letter-spacing: .04em; }
+.tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.tile {
+  width: 52px; height: 58px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); display: grid; place-content: center; gap: 0; text-align: center; padding: 0;
+}
+.tile b { font: 900 22px/1.1 var(--f-display); display: block; }
+.tile small { font: 600 11px/1.2 var(--f-ipa); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile:hover:not(:disabled) { border-color: var(--dir); }
+.tile[aria-pressed="true"] { background: var(--dir); border-color: var(--dir); color: var(--on-dir); }
+.tile[aria-pressed="true"] small { color: inherit; opacity: .85; }
+.tile:disabled { opacity: .35; cursor: default; }
+.tiles.sub .tile { width: 44px; height: 48px; border-radius: 12px; }
+.tiles.sub .tile b { font-size: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 4px 12px; font: 500 14px/1.5 var(--f-body); display: inline-flex; gap: 6px; align-items: baseline; }
+.chip-btn i { font: 600 12px var(--f-ipa); font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip-btn:hover { border-color: var(--dir); }
+.chip-btn[aria-pressed="true"] { background: var(--dir); border-color: var(--dir); color: var(--on-dir); }
+.chip-btn[aria-pressed="true"] i { color: inherit; opacity: .85; }
+
+.meta-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 2px 10px; font-size: 14px; color: var(--muted); }
+.meta-bar strong { color: var(--ink); font: 700 15px var(--f-display); font-variant-numeric: tabular-nums; }
+.link-btn { border: 0; background: none; padding: 2px 4px; color: var(--dir); font: 600 14px var(--f-body); text-decoration: underline; text-underline-offset: 3px; }
+.meta-bar .spacer { margin-left: auto; }
+
+.listbox { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: clip; box-shadow: var(--shadow); }
+.list { list-style: none; margin: 0; padding: 0; }
+.gh {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--surface-2); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line);
+  padding: 4px 16px; font: 900 17px/1.6 var(--f-display); color: var(--dir);
+}
+.gh:first-child { border-top: 0; }
+.row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 8px 12px 8px 12px; border-bottom: 1px solid var(--line); content-visibility: auto; contain-intrinsic-size: auto 72px; }
+.row:last-child { border-bottom: 0; }
+.row.sel { background: var(--dir-soft); }
+.play {
+  width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--dia); color: var(--on-dia); display: grid; place-items: center; flex: none;
+  box-shadow: 0 2px 6px rgba(13, 107, 120, .25); transition: transform .12s;
+}
+.play:hover { transform: scale(1.06); }
+.play.is-playing { animation: ring 1s ease-out infinite; }
+.play.is-missing { background: var(--muted); }
+@keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--dia) 55%, transparent); } to { box-shadow: 0 0 0 14px transparent; } }
+.rowmain { border: 0; background: none; text-align: left; padding: 4px 6px; border-radius: 10px; min-width: 0; display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 2px 18px; align-items: baseline; }
+.rowmain:hover { background: color-mix(in srgb, var(--dir-soft) 60%, transparent); }
+.w { font: 700 24px/1.35 var(--f-display); color: var(--dia); overflow-wrap: anywhere; }
+.w .ipa { margin-left: 10px; }
+.ipa { font: 400 14px/1.4 var(--f-ipa); color: var(--muted); }
+.g { color: var(--ink); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.app[data-mode="std"] .rowmain { grid-template-columns: minmax(0, 1fr); gap: 0; }
+.app[data-mode="std"] .g { font: 700 19px/1.45 var(--f-display); color: var(--std); -webkit-line-clamp: 2; order: -1; }
+.app[data-mode="std"] .w { font-size: 17px; }
+.tags { grid-column: 3; grid-row: 1; display: flex; flex-wrap: nowrap; gap: 6px; padding: 0 4px; justify-content: flex-end; }
+.tag { font: 500 12px/1.6 var(--f-body); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 9px; }
+.tag.why { color: var(--std); border-color: color-mix(in srgb, var(--std) 45%, transparent); }
+.empty { padding: 36px 20px; text-align: center; color: var(--muted); }
+.empty b { display: block; font: 700 18px var(--f-display); color: var(--ink); margin-bottom: 6px; }
+.more-bar { display: flex; justify-content: center; padding: 16px 0 0; }
+.credit { margin: 24px 4px 0; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+.credit a { color: var(--dia); }
+
+/* ---------- detail ---------- */
+.detailcol {
+  position: fixed; inset: 0; z-index: 40; background: var(--surface); overflow: auto; overscroll-behavior: contain;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  transform: translateY(102%); visibility: hidden; transition: transform .25s ease, visibility 0s .25s;
+}
+.detailcol.open { transform: none; visibility: visible; transition: transform .25s ease; }
+.d { padding: 12px 20px 48px; max-width: 640px; margin: 0 auto; }
+.d-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.d-nav .back { border: 0; background: none; color: var(--dia); font: 700 15px var(--f-display); padding: 8px 8px 8px 0; display: inline-flex; gap: 4px; align-items: center; }
+.d-nav .pn { margin-left: auto; display: flex; gap: 8px; }
+.d-orth { margin: 8px 0 0; font: 900 clamp(46px, 11vw, 68px)/1.15 var(--f-display); color: var(--dia); overflow-wrap: anywhere; }
+.d-pron { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-top: 4px; }
+.d-pron .acc { font: 500 21px var(--f-accent); color: var(--ink); }
+.d-pron .ipa { font-size: 17px; }
+.d-audio { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 18px 0 8px; }
+.play.big { width: 64px; height: 64px; }
+.pill-btn { border: 1.5px solid var(--dia); color: var(--dia); background: transparent; border-radius: 999px; padding: 8px 18px; font: 700 14px var(--f-display); }
+.pill-btn:hover { background: var(--dia-soft); }
+.file { font: 400 12.5px var(--f-ipa); color: var(--muted); }
+.sense { border-top: 1px solid var(--line); padding: 18px 0 6px; margin-top: 14px; }
+.s-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.s-no { font: 900 15px var(--f-display); color: var(--dia); margin-right: 2px; }
+.chip { font: 700 12.5px/1.6 var(--f-display); padding: 0 10px; border-radius: 999px; background: var(--dia-soft); color: var(--dia); }
+.chip.dom { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+.chip.hom { background: transparent; color: var(--muted); border: 1px dashed var(--line); font-weight: 500; }
+.def { margin: 0 0 12px; font-size: 16px; line-height: 1.85; }
+.lab { display: inline-block; font: 700 12px/1.6 var(--f-display); padding: 0 8px; margin-right: 8px; border-radius: 6px; background: var(--std-soft); color: var(--std); vertical-align: 1px; }
+.def rt { font-size: .5em; }
+.ex { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.ex li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
+.ex li.has-aud { grid-template-columns: 36px minmax(0, 1fr); }
+.ex .ex-body { min-width: 0; padding-left: 14px; border-left: 3px solid var(--dia-soft); }
+.ex li.has-aud .ex-body { grid-column: 2; }
+.play.sm { width: 36px; height: 36px; margin-top: 2px; box-shadow: none; }
+.play.sm svg { width: 16px; height: 16px; }
+.ex .q { margin: 0; font: 500 18px/1.6 var(--f-accent); color: var(--ink); overflow-wrap: anywhere; }
+.ex .ipa { margin: 0; overflow-wrap: anywhere; }
+.ex .tr { margin: 2px 0 0; color: var(--std); font-weight: 500; }
+.ex .note { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); background: var(--surface-2); border-radius: 8px; padding: 6px 10px; }
+.ex .song { font: 700 11.5px var(--f-display); color: var(--on-dia); background: var(--dia); border-radius: 6px; padding: 0 7px; margin-right: 6px; }
+details.more > summary { cursor: pointer; margin-top: 12px; color: var(--dia); font: 700 14px var(--f-display); }
+details.more .ex { margin-top: 14px; }
+.d-meta { margin: 28px 0 0; border-top: 1px solid var(--line); padding-top: 14px; font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+.d-meta code { font: 400 12.5px var(--f-ipa); }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 24px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 12px; font-size: 14px; max-width: min(92vw, 520px); z-index: 60; transition: opacity .2s, transform .2s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 560px) {
+  .brand { flex-direction: column; gap: 0; }
+  .modes { width: 100%; }
+  .modes button { flex: 1; padding: 8px 6px; }
+  .rowmain { grid-template-columns: minmax(0, 1fr); gap: 0; grid-column: 2 / 4; }
+  .tags { grid-column: 2 / 4; grid-row: 2; justify-content: flex-start; padding: 0 6px; }
+  .tags .tag:not(.why) { display: none; }
+  .tags:not(:has(.why)) { display: none; }
+}
+
+@media (min-width: 900px) {
+  .top { padding: 16px 24px; }
+  .top-in { flex-wrap: nowrap; }
+  .search-row { flex: 1 1 auto; order: 0; flex-wrap: nowrap; }
+  .tools { order: 0; }
+  .app { height: 100%; }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 480px); overflow: hidden; }
+  .listcol { overflow: auto; padding: 0 24px 48px; }
+  .browse { margin-top: 20px; }
+  .gh { top: 0; }
+  .detailcol { position: static; transform: none; visibility: visible; overflow: auto; border-left: 1px solid var(--line); padding: 0; transition: none; z-index: auto; }
+  .d { padding: 20px 28px 56px; margin: 0; }
+  .d-nav .back { display: none; }
+  .d-nav .pn { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" id="app" data-mode="all">
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">
+        <h1>鳩間方言辞典</h1>
+        <p>沖縄県八重山諸島・鳩間島のことば<br><span id="sub"></span></p>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="theme" type="button" aria-label="表示テーマを切り替える" title="表示テーマ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17Z" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>
+      <div class="search-row">
+        <div class="search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.9-4.9"/></svg>
+          <input id="q" type="search" inputmode="search" autocomplete="off" spellcheck="false" lang="ja" placeholder="方言・標準語で検索（例: アーサ、あわ）" aria-label="検索">
+          <button class="clear" id="clear" type="button" aria-label="検索語を消す" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <div class="modes" role="group" aria-label="引き方">
+          <button type="button" data-mode="all" aria-pressed="true">すべて</button>
+          <button type="button" data-mode="dia" aria-pressed="false">方言から</button>
+          <button type="button" data-mode="std" aria-pressed="false">標準語から</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="listcol" id="listcol" aria-label="語の一覧">
+      <details class="browse" id="browse">
+        <summary>五十音・分類で絞り込む</summary>
+        <div class="browse-body">
+          <div>
+            <p class="grp-label" id="kana-label">頭の音</p>
+            <div class="tiles" id="rows-tiles"></div>
+            <div class="tiles sub" id="kana-tiles" style="margin-top:8px"></div>
+          </div>
+          <div>
+            <p class="grp-label">品詞</p>
+            <div class="chips" id="pos-chips"></div>
+          </div>
+          <div id="dom-wrap">
+            <p class="grp-label">分野</p>
+            <div class="chips" id="dom-chips"></div>
+          </div>
+        </div>
+      </details>
+      <div class="meta-bar">
+        <span id="count"></span>
+        <button class="link-btn" id="reset" type="button" hidden>絞り込みを解除</button>
+        <button class="link-btn spacer" id="random" type="button">ランダムな1語</button>
+      </div>
+      <div class="listbox"><ul class="list" id="list"><li class="empty">読み込み中です…</li></ul></div>
+      <div class="more-bar" id="more" hidden><button class="pill-btn" id="more-btn" type="button">さらに表示</button></div>
+      <p class="credit">
+        出典: TEI Lex-0版 鳩間方言辞典（国立国語研究所、編集: 王一凡・中川奈津子、2026年4月28日版）。
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>。
+        音声: 見出し語 <a href="https://doi.org/10.5281/zenodo.4560935" target="_blank" rel="noopener">doi:10.5281/zenodo.4560935</a>（CC BY-SA）、例文 <a href="https://doi.org/10.5281/zenodo.7100944" target="_blank" rel="noopener">doi:10.5281/zenodo.7100944</a>（CC BY）。
+        標準語の見出しは語釈の最初の一文から自動で取り出したもので、編集した見出し語ではありません。
+      </p>
+    </section>
+    <aside class="detailcol" id="detail" aria-label="語の詳細"></aside>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="hatoma-data">[{"id":"HATOMA.1","orth":"ア","acc":"⸣ア","ipa":"[ʔa]","senses":[{"pos":"語素","def":"遠称の指示語を作る。","gloss":"遠称の指示語を作る","glossKey":"えんしょうのしじごをつくる","ex":[{"t":"⸣アドー パ⸢ララ⸣ヌ","ipa":"[⸣ʔadoː pa⸢rara⸣nu]","tr":"あんなに遠くへは行けない","a":1},{"t":"ア⸢ダカ⸣ヌ ⸣ムノー ⸢カーラヌ","ipa":"[⸣ʔa⸢daka⸣nu ⸣munoː ⸢kaːranu]","tr":"あんなに高いものは買えない","a":2}]},{"pos":"語素","def":"話題の事実を指し示す指示語を作る。","gloss":"話題の事実を指し示す指示語を作る","glossKey":"わだいのじじつをさししめすしじごをつくる","ex":[{"t":"⸣アイヤー ナ⸢ラ⸣ヌ","ipa":"[⸣ʔaijaː na⸢ra⸣nu]","tr":"そうは出来ない","a":3},{"t":"⸣アイブ ク⸢トゥ⸣ヌ ⸢アン","ipa":"[⸣ʔaibu ku̥⸢tu⸣nu ⸢ʔaŋ]","tr":"そんなことがあるものか","a":4}]}]},{"id":"HATOMA.2","orth":"アー","acc":"⸣アー","ipa":"[⸣ʔaː]","senses":[{"pos":"名詞","def":"(植)粟。五穀の一つ。粘り気のある、ム⸢チアー[mu⸢ʧiʔaː](糯粟)と粘り気のない、サ⸢ク⸣アー[sḁ⸢ku⸣ʔaː](粳粟)があった。粟は水田耕作の出来ない島々でよく栽培された。","gloss":"粟","glossKey":"あわ","ex":[{"t":"⸢アーヌ⸣イー","ipa":"[⸢ʔaːnu⸣ʔiː]","tr":"粟のご飯、粟の飯","a":5},{"t":"⸢アー⸣ムチ","ipa":"[⸢ʔaː⸣muʧi]","tr":"(粟餅))","a":6},{"t":"ム⸢チアー","ipa":"[mu⸢ʧiʔaː]","tr":"糯粟","a":7},{"t":"サ⸢ク⸣アー","ipa":"[sḁ⸢ku⸣ʔaː]","tr":"粳粟","a":8},{"t":"サ⸢ク⸣マイナー ム⸢チアー⸣ マ⸢ザー⸣シティ バ⸢カス⸣カー イッ⸢ケナ⸣ ン⸢マー⸣ン","ipa":"[sḁ⸢ku⸣mainaː mu⸢ʧiʔaː⸣ ma⸢ʣaː⸣ʃi̥ti ba⸢kasu⸣kaː ʔik⸢kena⸣ ʔm⸢maː⸣ŋ]","tr":"粳米に糯粟を混ぜて炊くと非常に美味しい","a":9}],"domain":"植物"}]},{"id":"HATOMA.3","orth":"アー","acc":"⸢アー","ipa":"[⸢ʔaː]","senses":[{"pos":"感動詞","def":"ああ。感動した時に発する声。","gloss":"ああ","glossKey":"ああ","ex":[{"t":"⸢アー フントー⸣ヌシェー ウ⸢レー","ipa":"[⸢ʔaː ɸuntoː⸣nuʃeː ʔu⸢reː]","tr":"ああ、本当だよ、それは","a":10},{"t":"⸢アー⸣ ウ⸢ムッサリ⸣ブバン","ipa":"[⸢ʔaː⸣ ʔu⸢mussari⸣buban]","tr":"ああ、おもしろいよ","a":11},{"t":"⸢アー⸣ イ⸢ナムヌ⸣ダラ","ipa":"[⸢ʔaː⸣ ʔi⸢namunu⸣dara]","tr":"ああ、残念だ","a":12},{"t":"⸢アー キュー⸣ヌ シ⸢キ⸣ヌ ⸢カイ⸣ヤー⸢ヨー","ipa":"[⸢ʔaː kjuː⸣nu ʃi̥⸢ki⸣nu ⸢kai⸣jaː⸢joː]","tr":"ああ、今日&lt;今夜&gt;の月の何と美しいことよ","a":13}]}]},{"id":"HATOMA.4","orth":"アー","acc":"⸢アー","ipa":"[⸢ʔaː]","senses":[{"pos":"副詞","def":"人が口を大きく開けた様子。ああん。","gloss":"人が口を大きく開けた様子","glossKey":"にんがくちをおおきくひらけたようす","ex":[{"t":"⸢アー⸣ティ フ⸢チ アキ⸣ミリ ⸢ミー","ipa":"[⸢ʔaː⸣ti ɸu̥⸢ʧi ʔaki⸣miri⸢miː]","tr":"ああんと口を開けてごらん","a":14}]}]},{"id":"HATOMA.5","orth":"アーアー","acc":"⸢アーアー","ipa":"[⸢ʔaːʔaː]","senses":[{"pos":"副詞","def":"ああああ(嗚呼嗚呼)。嘆き悲しむさま。深く思い悩むさま。","gloss":"ああああ(嗚呼嗚呼)","glossKey":"ああああ","ex":[{"t":"⸣アボーヤ ビ⸢コーンッふァバ ピー⸣タイ トゥ⸢ラ⸣リ イ⸢ク⸣サナ シ⸢ナシティル ピーズ アーアー⸣シ ⸢オー⸣ル","ipa":"[⸣ʔaboːja bi⸢koːnffaba piː⸣tai tu⸢ra⸣ri ʔi⸢ku⸣sana ʃi⸢naʃitiru piːʣu ʔaːʔaː⸣ʃi ⸢ʔoː⸣ru]","tr":"お母さんは男の子を徴兵され、戦争で死なせてしまって毎日嘆き悲しんでおられる","a":15}]}]},{"id":"HATOMA.6","orth":"アーイ","acc":"アー⸢イ","ipa":"[ʔaː⸢i]","senses":[{"pos":"感動詞","def":"いいえ。いや。いや、そうではない。いや、ちがう。村落内では目上、同等、目下の人にも使える。特に待遇表現上留意すべき外来の村長や校長、巡査などに対しては、ウー⸢ウー⸣ウー ア⸢ラ⸣ヌ⸢ユー[ʔuː⸢ʔuː⸣ʔuː ʔa⸢ra⸣nu⸢juː](いいえ、ちがいます)のようにいう。","gloss":"いいえ","glossKey":"いいえ","ex":[{"t":"アー⸢イ⸣ マ⸢ナ⸣マー パ⸢ラ⸣ヌ","ipa":"[ʔaː⸢i⸣ ma⸢na⸣maː pa⸢ra⸣nu]","tr":"いや、今は行かない","a":16},{"t":"アー⸢イ⸣ ウ⸢レー⸣ アイヤ ア⸢ラ⸣ヌ","ipa":"[ʔaː⸢i⸣ ʔu⸢reː⸣ ʔaijaː ʔa⸢ra⸣nu]","tr":"いや、それはそうではない","a":17},{"t":"アー⸢イ ワンマー⸣ ッ⸢ふィーラヌ","ipa":"[ʔaː⸢i wammaː⸣ f⸢fiːranu]","tr":"いや&lt;否&gt;、君には上げ&lt;呉れ&gt;ない","a":18}]}]},{"id":"HATOMA.7","orth":"アーガイ","acc":"⸢アー⸣ガイ","ipa":"[ʔaː⸣gai]","senses":[{"pos":"名詞","def":"魚の名前。和名、ヒブダイ。ブダイ科の魚。体長30~40センチの成魚がよく漁獲される。肉は柔らかい。刺身にして、肝臓の味噌和えにして食すると美味しい。","gloss":"魚の名前","glossKey":"さかなのなまえ","ex":[{"t":"⸢アーガイ⸣ヌ キ⸢ム⸣バ ⸢ミー⸣スナ ⸣タリ カ⸢ケー⸣シティ ナ⸢マ⸣シ ⸢スー⸣カ イッ⸢ケン⸣ ン⸢マー⸣ン","ipa":"[⸢ʔaːgai⸣nu ki⸢mu⸣ba ⸢miː⸣suna ⸣tari kḁ⸢keː⸣ʃi̥ti na⸢ma⸣ʃi ⸢suː⸣ka ʔik⸢kem⸣ ʔm⸢maː⸣ŋ]","tr":"アーガイの肝臓を擂りつぶして溶かし、味噌に混ぜ合わせて刺身につけると非常に美味しい","a":19}]}]},{"id":"HATOMA.8","orth":"アーガチャー","acc":"⸢アーガ⸣チャー","ipa":"[⸢ʔaːga⸣ʧaː]","senses":[{"pos":"名詞","def":"(動)魚の名。和名、イロブダイ(雄)。その雌魚は⸣ミーハガー[⸣miːhagaː]という。ブダイ科の魚。体長60~80センチに成長するものがいる。普通は体長40~50センチのものが多く網にかかる。白身の魚肉は淡白な味であるが、刺身にして、その肝を味噌和えにしてミカン(九年母)の汁をかけて食すると美味である。また、蒲鉾の素材としても重宝されている。","gloss":"魚の名","glossKey":"さかなのめい","ex":[{"t":"⸢アーガチャー⸣ヌ ピ⸢サー⸣ ウ⸢コー⸣シティ ナ⸢マ⸣シ ⸣キシバ","ipa":"[⸢ʔaːgaʧaː⸣nu pi̥⸢saː⸣ ʔu⸢koː⸣ʃi̥ti na⸢ma⸣ʃi ⸣ki̥ʃiba]","tr":"イロブダイを三枚おろしにして&lt;平を起こして&gt;刺身にしなさい","a":20}],"domain":"動物"}]},{"id":"HATOMA.9","orth":"アーガヤー","acc":"アーガ⸢ヤー","ipa":"[ʔaːga⸢jaː]","senses":[{"pos":"感動詞","def":"ああ。ああ残念。ああ気の毒に。ああ、仕舞った。強調表現は、アーガ⸢ヤー[ʔaːga⸢jaː](ああ残念)という。","gloss":"ああ","glossKey":"ああ","ex":[{"t":"ア(ー)ガ⸢ヤー⸣ キ⸢ムイ⸣ツァー ⸢ヌー⸣シター ⸣ウレー","ipa":"[ʔa(ː)ga⸢jaː⸣ ki⸢mui⸣ʦaː ⸢nuːʃi̥⸣taː ⸣ʔureː]","tr":"ああ可哀相に、どうしたのか、それは","a":21}]}]},{"id":"HATOMA.11","orth":"アーグル","acc":"⸢アー⸣グル","ipa":"[⸢ʔaː⸣guru]","senses":[{"pos":"名詞","def":"粟を脱穀した後の茎。","gloss":"粟を脱穀した後の茎","glossKey":"あわをだっこくしたのちのくき","ex":[{"t":"⸢アー⸣グル ア⸢ツァ⸣ミキー ⸢モーシ⸣バ⸢ヨー","ipa":"[⸢ʔaː⸣guru ʔa⸢ʦa⸣mikiː ⸢moːʃi⸣ba⸢joː]","tr":"粟殻を集めて燃やしなさいよ","a":24}]},{"pos":"名詞","def":"粟を収穫した後の畑。","gloss":"粟を収穫した後の畑","glossKey":"あわをしゅうかくしたのちのはたけ","ex":[{"t":"⸢アー⸣グル ⸢カイ⸣シティ ⸣ウン イ⸢バ⸣ナー","ipa":"[⸢ʔaː⸣guru ⸢kai⸣ʃi̥ti ⸣ʔuŋ ʔi⸢ba⸣naː]","tr":"粟を収穫した後の畑を耕して芋を植えようね","a":25}]}]},{"id":"HATOMA.12","orth":"アークン","acc":"⸢アー⸣クン","ipa":"[⸢ʔaː⸣kuŋ]","senses":[{"pos":"自動詞","def":"いる(居る)。⸢ブンとも言う。あるく。ア⸢ラ⸣クン[ʔa⸢ra⸣kuŋ](歩く)の転訛した形。","gloss":"いる(居る)","glossKey":"いる","ex":[{"t":"⸣ミサレーティ ⸢アー⸣クン","ipa":"[⸣misareːti ⸢ʔaː⸣kuŋ]","tr":"元気でいる&lt;暮らしている&gt;","a":26},{"t":"⸢ワー⸣ マナー ⸢アーク⸣ワ","ipa":"[⸢waː⸣ manaː ⸢ʔaːku⸣wa]","tr":"君は何処に居るのか","a":27},{"t":"⸣カナー ⸢アー⸣クンケン ⸢サンガリ パッ⸣タヤー","ipa":"[⸣kanaː ⸢ʔaː⸣kuŋken ⸢saŋgari pat⸣tajaː]","tr":"あそこに居るところを引っ張られていったよ","a":28},{"t":"⸣アイブ ⸣ントンナー ⸢アー⸣キ ⸣ミサカー ⸢アー⸣ク ⸣クトー ナ⸢ルン⸣ドゥ ⸢アーカン⸣バル マ⸢シ⸠ナー","ipa":"[⸣ʔaibu ⸣tonnaː ⸢ʔaː⸣ki ⸣misakaː ⸢ʔaː⸣kuku̥toː na⸢run⸣du ⸢ʔaːkam⸣baru ma⸢ʃi⸠naː]","tr":"あんな所に居てよければ居ることは出来るが、居ないほうが良いよねえ","a":29},{"t":"⸣ウナー ⸢アー⸣ケー ⸣ミサムヌ","ipa":"[⸣ʔunaː⸢ʔaː⸣keː ⸣misamunu]","tr":"そこに居れば良いのに","a":30},{"t":"⸢アー⸣キバ","ipa":"[⸢ʔaː⸣kiba]","tr":"居れよ","a":31}],"sub":"HATOMA.12.1"},{"pos":"助動詞","def":"~ている。","gloss":"~ている","glossKey":"~ている","ex":[{"t":"ア⸢サビアー⸣クン","ipa":"[ʔa⸢sabiʔaː⸣kuŋ]","tr":"遊んでいる。遊びまわっている&lt;遊びあるく&gt;","a":32},{"t":"⸢ヨータビアー⸣クン","ipa":"[⸢joːtabiʔaː⸣kuŋ]","tr":"よたよたとふらついている&lt;あるく&gt;。千鳥足で歩く","a":33}],"sub":"HATOMA.12.2"}]},{"id":"HATOMA.1279","orth":"アークン","acc":"⸢アー⸣クン","ipa":"[⸢ʔaː⸣kuŋ]","senses":[{"pos":"自動詞","def":"本動詞として用いられ、「ある状態で進行している」、「居る」、「存在する」、「働いている」、等の意味を表す。「歩く」の転訛したもの。","gloss":"本動詞として用いられ、「ある状態で進行している」、「居る」、「存在する」、「働いている」、等の意味を表す","glossKey":"ほんどうしとしてもちいられ、「あるじょうたいでしんこうしている」、「いる」、「そんざいする」、「はたらいている」、などのいみをあらわす","ex":[{"t":"⸣カナー ⸢アー⸣ク プ⸢ソー ター⸣ヤ","ipa":"[⸣kanaː ⸢ʔaː⸣ku pu̥⸢soː taː⸣ja]","tr":"あそこにいる人は誰か","a":2116},{"t":"マー⸢ズン アー⸣クンティ","ipa":"[maː⸢ʣuŋ ʔaː⸣kunti]","tr":"一緒にいるさ、ほら","a":2117}],"sub":"HATOMA.1279.1"},{"pos":"補助動詞","def":"動詞の連用形に付いて、⸢~ている(現在進行形)」の意味を表す。本来は、ア⸢ラ⸣クン[ʔa⸢ra⸣kuŋ](歩く)であったのが、補助動詞として用いられるなかでアスペクト的意味表現を分担するようになって、r音が脱落したものと考えられる。","gloss":"動詞の連用形に付いて、⸢~ている(現在進行形)」の意味を表す","glossKey":"どうしのれんようけいについて、⸢~ている」のいみをあらわす","ex":[{"t":"ヤ⸢ラ⸣ビンケーヤ ⸣マナール ア⸢サビ アー⸣クカヤー","ipa":"[ja⸢ra⸣biŋkeːja ⸣manaːru ʔa⸢sabi ʔaː⸣kukajaː]","tr":"子供たちは何処に遊んで居る&lt;遊んで歩く&gt;のだろうか","a":2118}],"sub":"HATOMA.1279.2"},{"pos":"補助動詞","def":"シ⸢グトー シー アー⸣クンカヤー[ʃi⸢gutoː ʃiː ʔaː⸣kuŋkajaː](仕事はしている&lt;してあるく&gt;かねえ。&lt;仕事をして生活していることが継続進行している意を表す&gt;)","gloss":"シ⸢グトー シー アー⸣クンカヤー[ʃi⸢gutoː ʃiː ʔaː⸣kuŋkajaː](仕事はしている<してあるく>かねえ","glossKey":"し⸢ぐとー しー あー⸣くんかやー[[i⸢gutoguto guto iguto i guto i aguto i a⸣kukukajakukaja](しごとはしている<してあるく>かねえ","ex":[],"sub":"HATOMA.1279.2"}]},{"id":"HATOMA.13","orth":"アーサ","acc":"⸢アー⸣サ","ipa":"[⸢ʔaː⸣sa]","senses":[{"pos":"名詞","def":"(植)和名、あおさ(石蓴)。ヒトエグサ。緑藻類の海草の一種。海岸の珊瑚礁の岩に生える。干潮時に島の女性たちが採集し、天日乾燥して貯蔵する。日常の食事には、魚肉や豆腐のお汁に入れて食する。特に家造り共同作業の大量炊事には欠かせない食品で、豆腐や魚肉のお汁に入れて提供された。共同作業の際に提供される定番のスープの食材である。美味で忘れられない故郷の「味の素」である。⸣インアーサ[⸣ʔiŋʔaːsa]は形は似ているが食用に適さない。","gloss":"和名、あおさ(石蓴)","glossKey":"わみょう、あおさ","ex":[{"t":"⸢ヤースクリヤー⸣ヌ ⸢アーサ⸣ヌ ⸢スー⸣ヌ ン⸢マー⸣ワ⸢レー⸣ プ⸢ソー⸣ フ⸢バリティル⸣ ッ⸢ふァーリ⸠ツォー","ipa":"[⸢jaːsukurijaː⸣nu ⸢ʔaːsa⸣nu ⸢suː⸣nu ʔm⸢maː⸣wa⸢reː⸣ pu̥⸢soː⸣ ɸu⸢baritiru⸣ f⸢faːri⸠ʦoː]","tr":"家造り普請の家のアーサ汁の美味しいことよ。他人には食わせてやれない&lt;独占したい&gt;ほど美味しい&lt;他人は縛り付けておいてぞ食べられる&gt;んだよ","a":34,"note":"⸣インアーサ[⸣ʔiŋʔaːsa]参照"}],"domain":"植物"}]},{"id":"HATOMA.14","orth":"アーザ","acc":"⸢アー⸣ザ","ipa":"[⸢ʔaː⸣ʣa]","senses":[{"pos":"名詞","def":"兄。総称。親族名称、呼称。「'u-ra sin-ca 'a-ri(汝兄あるか)」「語音翻訳」『海東諸国紀』と関係があるとする説『図説琉球語辞典』がある。","gloss":"兄","glossKey":"あに","ex":[{"t":"⸢アー⸣ザー ⸣マナー ⸢オール⸣ワ","ipa":"[⸢ʔaː⸣ʣaː ⸣manaː ⸢ʔoːru⸣wa]","tr":"兄さんは何処に居られますか","a":35,"note":"この語彙には、ウ⸢ボー⸣ザ[ʔu⸢boː⸣ʣa](長<大>兄)、⸣ナカザー[⸣nakaʣaː](中兄)、アー⸢ザ⸣マ[ʔaː⸢ʣa⸣ma](末<小>兄)の部分体系<序列>がある。上に固有名詞を付ける際には、⸢イシ⸣トザー[⸢ʔiʃi⸣toʣaː](石戸兄)⸢サン⸣ドーザー[⸢san⸣doːzaː](三郎兄)⸣タローザー[⸣taroːʣaː](太郎兄)のように~⸣ザ[~⸣ʣa]となる。"},{"t":"⸢アー⸣ザー ⸢マー オーッ⸣タカヤー","ipa":"[⸢ʔaː⸣ʣaː ⸢maː ʔoːt⸣takajaː]","tr":"兄さんは何処へいらっしゃったかねえ","a":36}]}]},{"id":"HATOMA.15","orth":"アーサヌスー","acc":"⸢アーサ⸣ヌ ⸣スー","ipa":"[⸢ʔaːsa⸣nu ⸣suː]","senses":[{"pos":"連語","def":"アオサのお汁。アオサと豆腐のお汁は非常に美味で食も進むことから、家屋建築等の大勢の <ruby>賄<rt>マカナ<\/rt><\/ruby> いには定番の賄い料理として調理された。","gloss":"アオサのお汁","glossKey":"あおさのおしる","ex":[{"t":"⸢ヤースクリヤー⸣ヌ ⸢アーサ⸣ヌ ⸣スー ッ⸢ふァイン⸣ パラ⸢ディー","ipa":"[⸢jaːsu̥kurijaː⸣nu ⸢ʔaːsa⸣nu ⸣suː f⸢faim⸣ para⸢diː]","tr":"家屋を建築する家のアーサのお汁を食しに行こうよ","a":37}]}]},{"id":"HATOMA.16","orth":"アーザマ","acc":"アー⸢ザ⸣マ","ipa":"[ʔaː⸢ʣa⸣ma]","senses":[{"pos":"名詞","def":"三兄。「小兄」の義。⸢アー⸣ザ[⸢ʔaː⸣ʣa](兄)に、-マ[-ma](小さいもの。指小辞)が付いて形成された語。親族名称、呼称。","gloss":"三兄","glossKey":"さんあに","ex":[{"t":"⸢バン⸣テヌ アー⸢ザ⸣マー イッ⸢ケン ウイゾー⸣ジ⸢ダー","ipa":"[⸢ban⸣tenu ʔaː⸢ʣa⸣maː ʔik⸢keŋ ʔuiʣoː⸣ʤi⸢daː]","tr":"私の家の三兄は非常に泳ぎ上手だよ","a":38},{"t":"アー⸢ザ⸣マー ⸢ギューチ⸣ ナロー⸢ル⸣ワ","ipa":"[ʔaː⸢ʣa⸣maː ⸢gjuːʧi⸣ naroː⸢ru⸣wa]","tr":"三兄はいくつになられますか","a":39}]}]},{"id":"HATOMA.22","orth":"アーサラカーサラ","acc":"⸢アーサラカー⸣サラ","ipa":"[⸢ʔaːsarakaː⸣sara]","senses":[{"pos":"副詞","def":"あれこれと。あれやこれやと。ヌー⸢サラクイサラ[nuː⸢sarakuisara](あれやこれやと)、⸢ヌー⸣ヤクイヤ[⸢nuː⸣jakuija](なんやかんや)もいう。","gloss":"あれこれと","glossKey":"あれこれと","ex":[{"t":"⸢アーサラカー⸣サラ ム⸢ヌ⸣バウムイ ムシ⸢トゥ ニバラヌ","ipa":"[⸢ʔaːsarakaː⸣sara mu⸢nu⸣ba ʔumui muʃi̥⸢tu⸣ ni⸢baranu]","tr":"あれやこれやと心配して&lt;物思いして&gt;ちっとも眠れない","a":50}]}]},{"id":"HATOMA.17","orth":"アーシ","acc":"⸢アー⸣シ","ipa":"[⸢ʔaː⸣ʃi]","senses":[{"pos":"名詞","def":"制裁。罰。厳格な躾。","gloss":"制裁","glossKey":"せいさい","ex":[{"t":"⸢アー⸣シ シ⸢キ⸣ルン","ipa":"[⸢ʔaː⸣ʃi ʃi̥⸢ki⸣ruŋ]","tr":"制裁する、罰を与える","a":40},{"t":"ウ⸢ヤ⸣ヌ ⸣ムニ シゥ⸢カン ムノー アー⸣シ ⸣シキ トゥ⸢ラ⸣シ","ipa":"[ʔu⸢ja⸣nu ⸣muni si̥⸢kam munoː ʔaː⸣ʃi ⸣ʃi̥ki tu⸢ra⸣ʃi]","tr":"親の言うことを聞かない子は厳罰を与えてやれ","a":41}]}]},{"id":"HATOMA.18","orth":"アーシ","acc":"アー⸢シ","ipa":"[ʔaː⸢ʃi]","senses":[{"pos":"接尾辞","def":"たびに。ごとに(毎)。名詞や動詞の連体形、終止形に付いて、「そのたびに」の意味を表す。「~風に不令遇&lt;アハセズ&gt;つつみ無く~。万、1021」の、「合わす」の連用形「合わせて」が接尾語化したもの。","gloss":"たびに","glossKey":"たびに","ex":[{"t":"⸢ウン⸣ネー タ⸢ジ⸣ナイ パルアー⸢シ ヤー⸣ナ ブ⸢ラーヌ","ipa":"[⸢ʔun⸣neː ta⸢ʤi⸣nai paruʔaː⸢ʃi jaː⸣na bu⸢raːnu]","tr":"あの家に訪ねて行くたびに家にいない","a":42}]}]},{"id":"HATOMA.20","orth":"アーシキン","acc":"⸢アーシ⸣キン","ipa":"[⸢ʔaːʃi⸣kiŋ]","senses":[{"pos":"名詞","def":"袷(あわせ)。「袷衣」の転訛したもの。","gloss":"袷(あわせ)","glossKey":"あわせ","ex":[{"t":"⸢シンダイ ピー⸣ヤ ナリ⸢キー⸣バ ⸢アーシキン⸣ヌ ス⸢コールン サン⸣カー ナ⸢ラ⸣ヌ","ipa":"[⸢ʃindai piː⸣ja nari⸢kiː⸣ba ⸢ʔaːʃikiŋ⸣nu su⸢koːrun ⸢saŋ⸣kaː na⸢ra⸣nu]","tr":"次第に寒くなってくるので袷の準備もしないといけない","a":44},{"t":"⸢アーシキン⸣マー ⸢ギュックビ⸣ ア⸢ル⸣ワ","ipa":"[⸢ʔaːʃikim⸣maː ⸢gjukkubi⸣ ʔa⸢ru⸣wa]","tr":"袷は何着あるか","a":45},{"t":"⸢アーシキン⸣バ カ⸢サビ⸣ キ⸢スタンティン ピー⸣ヤー ニ⸢ジララ⸣ヌ","ipa":"[⸢ʔaːʃikim⸣ba kḁ⸢sabi⸣ ki̥⸢sutantim piː⸣jaː ni⸢ʤirara⸣nu]","tr":"袷を重ねて着ても寒さは堪えられない","a":46,"note":"裏地の付いた冬用の着物。平常は⸣バサキン[⸣basakiŋ](芭蕉布の単衣)か、⸣ブーキン[⸣buːkiŋ](麻布の単衣)を着て過ごした。"},{"t":"ク⸢トゥシヌ⸣ フ⸢ヨー アーシ⸣キン プ⸢スッ⸣クビシ ⸢コーシェー⸣チバン","ipa":"[ku̥⸢tuʃinu⸣ ɸu⸢joː ʔaːʃi⸣kim pu̥⸢suk⸣kubiʃi ⸢koːʃeː⸣ʧibaŋ]","tr":"今年の冬は袷一着で越して&lt;過ごして&gt;しまったよ","a":47}]}]},{"id":"HATOMA.36","orth":"アーシジ","acc":"⸢アー⸣シジ","ipa":"[⸢ʔaː⸣ʃidʒi]","senses":[{"pos":"名詞","def":"粟粒。粟。","gloss":"粟粒","glossKey":"あわつぶ","ex":[{"t":"⸢アー⸣シジェー ⸢ピッ⸣チンッツァン ⸢ナー⸣ヌ","ipa":"[⸢ʔaː⸣ʃidʒeː ⸢pitʧinʦan ⸢naː⸣nu]","tr":"粟粒はたった一つ&lt;一粒&gt;さえもない","a":96},{"t":"⸢アーシジ⸣ヌ カタチニ ナ⸢チアシブヌ⸣ ンジ ⸢アーリ⸣キー ⸢ビーヨー⸣ヌ ナ⸢ラ⸣ヌ","ipa":"[⸢ʔaːʃidʒi⸣nu kḁtaʧini na⸢ʧiʔaʃibunu⸣ ʔndʒi ⸢ʔaːri⸣kiː ⸢biːjoː⸣nu na⸢ra⸣nu]","tr":"粟粒のような吹き出物&lt;夏あせも&gt;が吹き出てきて痒くてならない","a":97}]}]},{"id":"HATOMA.32","orth":"アーシシキルン","acc":"⸢アー⸣シ シ⸢キ⸣ルン","ipa":"[ʔaː⸣ʃi ʃi̥⸢ki⸣ruŋ]","senses":[{"pos":"連語","def":"指導や教育のため、体罰を与える。懲らしめる。いじめ(苛)る。","gloss":"指導や教育のため、体罰を与える","glossKey":"しどうやきょういくのため、たいばつをあたえる","ex":[{"t":"ク⸢ヌ ッふァー⸣ イッ⸢ケナ アー⸣シ シ⸢キラ⸣レーティル ⸢マイフナー⸣ マ⸢レー⸣ダー","ipa":"[ku⸢nu ffaː ⸣ʔik⸢kena ʔaː⸣ʃi ʃi̥⸢kira⸣reːtiru ⸢maiɸunaː⸣ ma⸢reː⸣daː]","tr":"この子はひどく懲らしめられて立派な人に育ったのだよ","a":91},{"t":"ヤ⸢ナクトー シーティル アー⸣シ シ⸢キラ⸣リ⸢ベ⸣ー","ipa":"[ja⸢nakutoː ʃiːtiru ʔaː⸣ʃi ʃi̥⸢kira⸣ri⸢be⸣ː]","tr":"悪事を働いてひどく懲らしめられている","a":92}]}]},{"id":"HATOMA.21","orth":"アーシックナー","acc":"⸢アーシッ⸣クナー","ipa":"[⸢ʔaːʃik⸣kunaː]","senses":[{"pos":"名詞","def":"喧嘩をさせあうこと。「あわせくらべ」の義。","gloss":"喧嘩をさせあうこと","glossKey":"けんかをさせあうこと","ex":[{"t":"トゥ⸢ル アーシッ⸣クナー ⸢スン","ipa":"[tu⸢ru ʔaːʃik⸣kunaː ⸢suŋ]","tr":"闘鶏をする","a":48},{"t":"シ⸢ダミ⸣ヌ ⸢グル アーシッ⸣クナー ⸢スン","ipa":"[ʃi⸢dami⸣nu gu⸢ru ʔaːʃik⸣kunaː ⸢suŋ]","tr":"蝸牛殻の尻の潰し合いをする子供の遊び","a":49}]}]},{"id":"HATOMA.23","orth":"アーシパウル","acc":"⸢アーシパウ⸣ル","ipa":"[⸢ʔaːʃipau⸣ru]","senses":[{"pos":"名詞","def":"袷羽織。⸢アーシハウ⸣リ[⸢ʔaːʃihau⸣ri]ともいう。羽織は、ごく限られた家にあるだけで、一般の家庭にはなかった。","gloss":"袷羽織","glossKey":"あわせばおり","ex":[{"t":"⸢タッ⸣テナール ⸢アーシパウ⸣ロー ア⸢ロール⸣ワ","ipa":"[⸢tat⸣tenaːru ⸢ʔaːʃipau⸣roː ʔa⸢roːru⸣wa]","tr":"誰の家に&lt;どこの家に&gt;袷羽織はございますか&lt;あられるのですか&gt;","a":51},{"t":"ク⸢レー ター アーシパウ⸣ルヤ","ipa":"[ku⸢reː taː ʔaːʃipau⸣ruja]","tr":"これは誰の袷羽織か","a":52}]}]},{"id":"HATOMA.24","orth":"アーシフチ","acc":"⸢アーシ⸣フチ","ipa":"[⸢ʔaːʃi⸣ɸu̥ʧi]","senses":[{"pos":"名詞","def":"合わせ目。二つ、またはそれ以上のものを接着するところ。「合わせ口」の義。⸢アーシ⸣ミー[⸢ʔaːʃi⸣miː](合わせ目)ともいう。","gloss":"合わせ目","glossKey":"あわせめ","ex":[{"t":"⸢アーシフチ⸣ヌ ガッ⸢ツリ アー⸣ン⸢ベーティ⸣ル ミ⸢ジェー⸣ ム⸢リ⸣ル","ipa":"[⸢ʔaːʃiɸu̥ʧi⸣nu gat⸢ʦuri ʔaː⸣m⸢beːti⸣ru mi⸢dʒeː⸣ mu⸢ri⸣ru]","tr":"合わせ目がぴったりと合っていないから&lt;ぞ&gt;水は漏れるのだ","a":53}]}]},{"id":"HATOMA.19","orth":"アーシムヌ","acc":"⸢アーシ⸣ムヌ","ipa":"[⸢ʔaːʃi⸣munu]","senses":[{"pos":"名詞","def":"酢の漬物、酢漬け。野菜や魚などを塩や味噌で混ぜる。「調和、塩安不&lt;しほあふ&gt;」『新撰字鏡』に「もの」がついて形成されたものか。","gloss":"酢の漬物、酢漬け","glossKey":"すのつけもの、すづけけ","ex":[{"t":"⸢ダイクニ⸣ヌ ⸢アーシ⸣ムヌ","ipa":"[⸢daikuni⸣nu ⸢ʔaːʃi⸣munu]","tr":"大根の酢漬け","a":43}]}]},{"id":"HATOMA.33","orth":"アーシラ","acc":"⸢アー⸣シラ","ipa":"[⸢ʔaː⸣ʃira]","senses":[{"pos":"名詞","def":"粟を刈り取って、保存のため穂がついたまま稲叢のように積み上げもの。","gloss":"粟を刈り取って、保存のため穂がついたまま稲叢のように積み上げもの","glossKey":"あわをかりとって、ほぞんのためほがついたままいなむらのようにつみあげもの","ex":[{"t":"⸢アー⸣シラシ⸢ミ⸣ シケー","ipa":"[⸢ʔaː⸣ʃira ʃi⸢mi⸣ ʃi̥keː]","tr":"粟のシラ&lt;稲叢&gt;を積んで&lt;置いて&gt;ある","a":93,"note":"シ⸢ラ参照"}]}]},{"id":"HATOMA.34","orth":"アースクブ","acc":"⸢アースク⸣ブ","ipa":"[⸢ʔaːsuku⸣bu]","senses":[{"pos":"名詞","def":"粟殻。「あわすくも」の義。「粟・すくも(葦、茅の枯れたもの)」の転訛したもの。","gloss":"粟殻","glossKey":"あわから","ex":[{"t":"⸣アー ッサイ ⸢ソー⸣キナ イ⸢リティ ソーキ⸣バ ⸢アウ⸣リティル ⸢アースク⸣ブ トゥ⸢バソー⸣タ","ipa":"[⸣ʔaː ssai ⸢soː⸣kina ʔi⸢riti soːki⸣ba ⸢ʔau⸣ritiru ⸢ʔaːsuku⸣bu tu⸢basoːt⸣ta]","tr":"粟を精げ、ソーキに入れてソーキを煽って粟殻を飛ばされた","a":94}]}]},{"id":"HATOMA.25","orth":"アースクリジマ","acc":"⸢アースクリ⸣ジマ","ipa":"[⸢ʔaːsu̥kuri⸣dʒima]","senses":[{"pos":"名詞","def":"粟を生産する島。水田がなく、米作の出来ない粟作の島。⸢アー⸣ジマ[⸢ʔaː⸣dʒima](粟島)ともいう。","gloss":"粟を生産する島","glossKey":"あわをせいさんするしま","ex":[{"t":"タ⸢キ⸣ドゥン フ⸢シ⸣マーヤ ⸢アースクリ⸣ジマティ ア⸢ザリ アー⸣バ ム⸢トゥ⸣バシー ス⸢ク⸣ロール","ipa":"[tḁ⸢ki⸣duŋ ɸu̥⸢ʃi⸣maːja ⸢ʔaːsu̥kuri⸣dʒimati ʔa⸢ʣari ʔaː⸣ba mu⸢tu⸣baʃiː su̥⸢ku⸣roːru]","tr":"竹富、黒島は粟作り島といわれ、粟を中心に耕作しておられる","a":54}]}]},{"id":"HATOMA.27","orth":"アースン","acc":"⸢アースン","ipa":"[⸢ʔaːsuŋ]","senses":[{"pos":"他動詞","def":"木を揺すって実を落とす。「~置きて枯らしみ安由流&lt;アユル&gt;實波~。万、4111」の他動詞化したもの。「Aye,uru,eta(アユル)、シモの地方では、果実、穀粒、麦などが自然に落ちたり、汗血などがしたたり落ちる」『邦訳日葡辞書』の他動詞化したもの。","gloss":"木を揺すって実を落とす","glossKey":"きをゆすってみをおとす","ex":[{"t":"フ⸢ナ⸣ブ ⸢アースン","ipa":"[ɸu⸢na⸣bu ⸢ʔaːsuŋ]","tr":"九年母&lt;蜜柑、シークヮーサー&gt;の実を揺すって落とす","a":55},{"t":"⸢ゴーナキ⸣ヌナロー マ⸢ダ ウーマン⸣バ ⸢アーサラヌ","ipa":"[⸢goːnaki⸣nunaroː ma⸢da ʔuːmam⸣ba ⸢ʔaːsaranu]","tr":"桑の実はまだ熟れないから揺すって落とすことが出来ない","a":56},{"t":"フ⸢ナ⸣ブ ⸢アーシ⸣ミサン","ipa":"[ɸu⸢na⸣bu ⸢ʔaːʃi⸣misaŋ]","tr":"蜜柑の木を揺すって蜜柑を落としてよい","a":57},{"t":"⸢アース⸣ クトー ナ⸢ラ⸣ヌ","ipa":"[⸢ʔaːsu⸣ ku̥toː na⸢ra⸣nu]","tr":"揺すって落とすことは、してはならない","a":58},{"t":"⸢アーシェー⸣ ミサムヌ","ipa":"[⸢ʔaːʃeː⸣ misamunu]","tr":"揺すって落とせばいいのに","a":59},{"t":"⸢アーシ⸣バ","ipa":"[⸢ʔaːʃi⸣ba]","tr":"揺すって落とせよ","a":60},{"t":"⸢ゴーナキー⸣ヌ ⸣ナル ⸢アースン","ipa":"[⸢goːnakiː⸣nu ⸣naru ⸢ʔaːsuŋ]","tr":"桑の実をゆすって落とす","a":61},{"t":"⸢アーサヌ","ipa":"[⸢ʔaːsanu]","tr":"落とさない","a":62},{"t":"⸢アーシ⸣プサン","ipa":"[⸢ʔaːʃi⸣ pu̥saŋ]","tr":"落としたい","a":63},{"t":"⸢アース⸣ プ⸢ソー⸣ ブ⸢ラーヌ","ipa":"[⸢ʔaːsu⸣ pu̥⸢soː⸣ bu⸢raːnu]","tr":"落とす人はいない","a":64},{"t":"⸢アーシェー⸣ ミサムヌ","ipa":"[⸢ʔaːʃeː⸣ misamunu]","tr":"落とせば良いのに","a":65},{"t":"⸢キー⸣ヌ ⸣ナル ⸢アーシ","ipa":"[⸢kiː⸣nu ⸣naru ⸢ʔaːʃi]","tr":"木の実を落とせ","a":66}]},{"pos":"他動詞","def":"乳を出す&lt;流す&gt;。","gloss":"乳を出す<流す>","glossKey":"ちちをだす<ながす>","ex":[{"t":"⸣シー ⸢アーシ⸣バ","ipa":"[⸣ʃiː ⸢ʔaːʃi⸣ba]","tr":"お乳を搾って出しなさい","a":67}]}]},{"id":"HATOMA.28","orth":"アースン","acc":"⸢アースン","ipa":"[⸢ʔaːsuŋ]","senses":[{"pos":"他動詞","def":"出来物や腫れ物の化膿したものを潰して膿を出す。","gloss":"出来物や腫れ物の化膿したものを潰して膿を出す","glossKey":"できぶつやはれもののかのうしたものをつぶしてうみをだす","ex":[{"t":"ア⸢シ⸣ブ ⸢アースン","ipa":"[ʔa⸢ʃi⸣bu ⸢ʔaːsuŋ]","tr":"できものを潰して膿を出す","a":68},{"t":"ク⸢ヌ アシ⸣ボー マ⸢ナ⸣マー ⸢アーサラヌ","ipa":"[ku⸢nu ʔaʃi⸣boː ma⸢na⸣maː ⸢ʔaːsaranu]","tr":"この出来物は、今は潰されない","a":69},{"t":"⸢アーシ⸣ ミサカー ⸢アース⸣クトー ⸣ナルン","ipa":"[⸢ʔaːʃi⸣ misakaː ⸢ʔaːsu⸣ ku̥toː ⸣naruŋ]","tr":"腫れ物を潰してよければ、潰すことはできる","a":70},{"t":"⸢アーシェー⸣ ミサムヌ","ipa":"[⸢ʔaːʃeː⸣ misamunu]","tr":"腫れ物を潰せばいいのに","a":71},{"t":"⸢パー⸣ク アーシ","ipa":"[⸢paː⸣ku ⸢ʔaːʃi]","tr":"早く潰せ","a":72}]}]},{"id":"HATOMA.29","orth":"アースン","acc":"⸢アースン","ipa":"[⸢ʔaːsuŋ]","senses":[{"pos":"他動詞","def":"乳を搾り出す(搾乳する)。","gloss":"乳を搾り出す(搾乳する)","glossKey":"ちちをしぼりだす","ex":[{"t":"⸢シー⸣バ ⸢アーシティ⸣ ッ⸢ふァン シーッふァー⸣スンティ ⸢ベー⸣ヌンドゥ ⸢シー⸣ヤ ⸢アーサラヌ","ipa":"[⸢ʃiː⸣ba ⸢ʔaːʃi̥ti⸣ f⸢faŋ ʃiː ffaː⸣sunti ⸢beː⸣nundu ⸢ʃiː⸣ja ⸢ʔaːsaranu]","tr":"母乳を絞り出して子どもに乳を与えようとするが、乳が絞り出せない","a":73},{"t":"⸣シー ⸢アーシ⸣ ミサンカヤー","ipa":"[⸣ʃiː ⸢ʔaːʃi⸣ misaŋkajaː]","tr":"搾乳してよいかねえ","a":74},{"t":"⸣シー ⸢アース⸣ クトー ス⸢ナ","ipa":"[⸣ʃiː ⸢ʔaːsu⸣ ku̥toː su⸢na]","tr":"搾乳することはするな","a":75},{"t":"⸣シー ⸢アーシェー⸣ ミサムヌ","ipa":"[⸣ʃiː ⸢ʔaːʃeː⸣ misamunu]","tr":"搾乳すればいいのに","a":76},{"t":"⸣シー ⸢アーシ","ipa":"[⸣ʃiː ⸢ʔaːʃi]","tr":"搾乳しなさい","a":77}]}]},{"id":"HATOMA.30","orth":"アースン","acc":"⸢アースン","ipa":"[⸢ʔaːsuŋ]","senses":[{"pos":"他動詞","def":"脱穀する。","gloss":"脱穀する","glossKey":"だっこくする","ex":[{"t":"⸢マイ アースン","ipa":"[⸢mai ʔaːsuŋ]","tr":"稲を脱穀する","a":78},{"t":"⸢キュー⸣ヤ オシキヌ カイ⸣ヤンダ ⸢マイ アーサバル⸣ ナル","ipa":"[⸢kjuː⸣ja ⸢ʔoʃikinu kai⸣janda ⸢mai ʔaːsabaru⸣ naru]","tr":"今日は天気がよいから稲の脱穀をしないといけない","a":79},{"t":"⸢アーシ⸣ ミサカー ⸣キューズーナ ⸢アース⸣ クトー ⸣ナルン","ipa":"[⸢ʔaːʃi⸣ misakaː ⸣kjuːʣuːna ⸢ʔaːsu⸣ku̥toː ⸣naruŋ]","tr":"脱穀してよければ、今日中に脱穀することは出来る","a":80},{"t":"⸢キュー⸣ヤ ⸢アーサラヌ","ipa":"[⸢kjuː⸣ja ⸢ʔaːsaranu]","tr":"今日は脱穀できない","a":81},{"t":"⸢パー⸣ク ⸢アーシェー⸣ ミサムヌ","ipa":"[⸢paː⸣ku ⸢ʔaːʃeː⸣ misamunu]","tr":"早く脱穀すればいいのに","a":82},{"t":"ヤー⸢ディン アーシ⸣ダー","ipa":"[jaː⸢diŋ ʔaːʃi⸣daː]","tr":"必ず&lt;きっと&gt;脱穀しなさいよ","a":83}]}]},{"id":"HATOMA.31","orth":"アースン","acc":"⸢アー⸣スン","ipa":"[⸢ʔaː⸣suŋ]","senses":[{"pos":"他動詞","def":"合わせる。くっつける。一つにする。照合する。「~風に不令遇&lt;アハセズ&gt;~。万、1021」、沖縄古語「あはす」[オ・古・琉・組・混]。","gloss":"合わせる","glossKey":"あわせる","ex":[{"t":"⸢ワー ジン⸣トゥ バー ジン ⸢アー⸣スカー ⸢ギュー⸣サ ナ⸢ル⸣ワ","ipa":"[⸢waː ʤin⸣tu baː ʤiŋ ⸢ʔaː⸣su̥kaː ⸢gjuːsa na⸢ru⸣wa]","tr":"君の金と私の金を合わせるといくらになるか","a":84},{"t":"⸢アー⸣スンティ ⸣ウムーカ ⸢アー⸣ス ⸣クトー ナ⸢ルン⸣ドゥ ⸢アーサン⸣ツォー","ipa":"[⸢ʔaː⸣sunti ⸣ʔumuːka ⸢ʔaː⸣su ⸣ku̥toː na⸢run⸣du ⸢ʔaːsan⸣ʦoː]","tr":"合わせようと思えば合わせることは出来るが、合わさないそうだ","a":85},{"t":"⸢アー⸣シェー ⸣ミサムヌ","ipa":"[⸢ʔaː⸣ʃeː ⸣misamunu]","tr":"合わせれば良いのに","a":86},{"t":"⸢アー⸣シバ","ipa":"[⸢ʔaː⸣ʃiba]","tr":"合わせなさいよ","a":87}]},{"pos":"他動詞","def":"喧嘩させる。戦わせる。","gloss":"喧嘩させる","glossKey":"けんかさせる","ex":[{"t":"トゥ⸢ル アー⸣シティ ア⸢サビ ベー","ipa":"[tu⸢ru ʔaː⸣ʃi̥ti ʔa⸢sabi beː]","tr":"鶏を喧嘩させて&lt;鶏闘させて&gt;遊んでいる","a":88}]},{"pos":"他動詞","def":"捏ね合わせる。混合させる。","gloss":"捏ね合わせる","glossKey":"つくねあわせる","ex":[{"t":"ム⸢チ アー⸣スン","ipa":"[mu⸢ʧi ʔaːsu⸣ŋ]","tr":"餅&lt;漆喰&gt;を捏ね合わせる","a":89}]},{"pos":"他動詞","def":"和える。酢や味噌で和える。","gloss":"和える","glossKey":"あえる","ex":[{"t":"ナ⸢マ⸣シェー フ⸢ナブ⸣ヌ シ⸢ル⸣トゥ ⸢ミース⸣トゥシ ⸢アー⸣スカー ン⸢マー⸣ン","ipa":"[na⸢ma⸣ʃeː ɸu⸢nabu⸣nu ʃi⸢ru⸣tu ⸢miːsu⸣tuʃi ⸢ʔaː⸣su̥kaː ʔm⸢maː⸣ŋ]","tr":"刺身は九年母の汁と味噌で和えると美味しい","a":90}]}]},{"id":"HATOMA.244","orth":"アースン","acc":"⸢アー⸣スン","ipa":"[⸢ʔaː⸣suŋ]","senses":[{"pos":"他動詞","def":"和える。混ぜ合わせる。","gloss":"和える","glossKey":"あえる","ex":[{"t":"フ⸢ナ⸣ブシ ⸣シー ス⸢ク⸣リティ ⸢ミース⸣トゥ ⸢アー⸣シティ ナ⸢マ⸣シ ッ⸢ふァイ⸣バ","ipa":"[ɸu⸢na⸣buʃi ⸣ʃiː su̥⸢ku⸣riti ⸢miːsu⸣tu ⸢ʔaː⸣ʃi̥ti na⸢ma⸣ʃi f⸢fai⸣ba]","tr":"蜜柑&lt;ヒラミレモン&gt;の汁で酢を作って味噌と和えて刺身を食べなさい","a":468},{"t":"⸢ミース⸣トゥ ⸢アー⸣スン","ipa":"[⸢miːsu⸣tu ⸢ʔaː⸣suŋ]","tr":"味噌と和える","a":469},{"t":"⸢アーサ⸣ヌ","ipa":"[⸢ʔaːsa⸣nu]","tr":"和えない","a":470},{"t":"⸢アー⸣ス ⸣ムノー ⸢ナー⸣ヌ","ipa":"[⸢ʔaː⸣su ⸣munoː ⸢naː⸣nu]","tr":"和える物はない","a":471},{"t":"⸢シー⸣トゥ ⸢アー⸣シェー ⸣ミサムヌ","ipa":"[⸢ʃiː⸣tu ⸢ʔaː⸣ʃeː ⸣misamunu]","tr":"酢と和えればいいのに","a":472},{"t":"⸢ミース⸣トゥ ⸢アー⸣シ","ipa":"[⸢miːsu⸣tu ⸢ʔaː⸣ʃi]","tr":"味噌と和えよ","a":473}]}]},{"id":"HATOMA.35","orth":"アーダニ","acc":"⸢アー⸣ダニ","ipa":"[⸢ʔaː⸣dani]","senses":[{"pos":"名詞","def":"粟の種子。","gloss":"粟の種子","glossKey":"あわのしゅし","ex":[{"t":"⸢エン⸣ヌ ⸢アー⸣ダネー ⸣トゥリ ⸣シケーンカヤー","ipa":"[⸢jen⸣nu ⸢ʔaː⸣daneː ⸣turi ⸣ʃi̥keːŋkajaː]","tr":"来年の粟の種子&lt;来年蒔く粟の種子&gt;は取っておいてあるだろうかなあ","a":95}]}]},{"id":"HATOMA.37","orth":"アーダリー","acc":"アーダ⸢リー","ipa":"[ʔaːda⸢riː]","senses":[{"pos":"感動詞","def":"まあ汚い。ああ嫌だ。ああつまらない。","gloss":"まあ汚い","glossKey":"まあきたない","ex":[{"t":"アーダ⸢リー⸣ ヌーヤ ウ⸢レー","ipa":"[ʔaːda⸢riː⸣ nuːja ʔu⸢reː]","tr":"まあ汚い。何だこれは","a":98}]}]},{"id":"HATOMA.38","orth":"アーッスン","acc":"⸢アー⸣ッスン","ipa":"[⸢ʔaː⸣ssuŋ]","senses":[{"pos":"名詞","def":"粟包み。脱穀した粟を袋に入れて包装したもの。","gloss":"粟包み","glossKey":"あわつつみ","ex":[{"t":"⸢アー⸣ッスン ⸢ピー⸣ク","ipa":"[⸢ʔaː⸣ssum ⸢piː⸣ku]","tr":"粟包みを手に提げて持ってきなさい","a":99}]}]},{"id":"HATOMA.39","orth":"アーツベー","acc":"⸢アー⸣ツベー","ipa":"[⸢ʔaː⸣ʦubeː]","senses":[{"pos":"名詞","def":"泡。粟粒。⸢アー⸣ツメー[⸢ʔaː⸣ʦumeː](粟粒)ともいう。","gloss":"泡","glossKey":"あわ","ex":[{"t":"ミ⸢チ⸣スー ⸣ナルカー ス⸢ナカ⸣ナー ⸢アー⸣ツベーヌ ウ⸢ケールン","ipa":"[mi⸢ʧi⸣suː ⸣narukaː su⸢naka⸣naː ⸢ʔaː⸣ʦubeːnu ʔu⸢keːruŋ]","tr":"満ち潮になると海には泡が浮かぶ&lt;浮く&gt;","a":100}]}]},{"id":"HATOMA.40","orth":"アーツメー","acc":"⸢アー⸣ツメー","ipa":"[⸢ʔaː⸣ʦumeː]","senses":[{"pos":"名詞","def":"泡。泡粒。⸢アー⸣ツベー[⸢ʔaː⸣ʦubeː](泡粒)ともいう。","gloss":"泡","glossKey":"あわ","ex":[{"t":"⸣アッツァサーリ ウ⸢シ⸣ シゥ⸢カウタール⸣ ウ⸢シェー アーフキティ⸣ フ⸢チヌマール⸣ナー ⸢アー⸣ツメー ⸣フキ ⸢ゴー⸣ダー ⸢シーベー","ipa":"[⸣ʔatʦasaːri ʔu⸢ʃi⸣ si̥⸢kautaːru⸣ ʔu⸢ʃeː ʔaːɸukiti⸣ ɸu̥⸢ʧinumaːru⸣naː ⸢ʔaː⸣ʦumeː ⸣ɸu̥ki ⸢goː⸣daː ⸢ʃiːbeː]","tr":"暑い最中に牛をこき使ったので、牛は泡を吹いて口の周りにいっぱい泡をつけている&lt;泡だらけになっている&gt;","a":101}]}]},{"id":"HATOMA.41","orth":"アーティンポー","acc":"⸢アーティン⸣ポー","ipa":"[⸢ʔaːtim⸣poː]","senses":[{"pos":"名詞","def":"あわて者(慌て者)。そそっかしい人。粗忽もの。落ち着きが無く、物事を急ぎすぎて失敗しやすい人。","gloss":"あわて者(慌て者)","glossKey":"あわてもの","ex":[{"t":"⸢アーティンポー⸣ヤ ノー⸢ン シミリバン⸣ ヤ⸢ブリ⸣ル シ⸢ティル","ipa":"[⸢ʔaːtimpoː⸣ja noː⸢ŋ ʃimiribaŋ⸣ ja⸢buri⸣ru ʃi̥⸢tiru]","tr":"粗忽者は何事をさせても失敗する&lt;壊して、やぶってしまう&gt;","a":102}]}]},{"id":"HATOMA.43","orth":"アートートゥ","acc":"⸢アートートゥ","ipa":"[⸢ʔaːtoːtu]","senses":[{"pos":"感動詞","def":"あな尊と。ああ尊と。⸢アー[⸢ʔaː](ああ)は、「阿那於茂志呂&lt;あなおもしろ&gt;、古語事之甚切、皆阿那&lt;あな&gt;といふ」『古語拾遺』の転訛か。⸢トートゥ[⸢toːtu](尊い。畏敬すべきである。有り難い)の義。⸢アー⸣トートゥ ⸢ウー⸣トートゥ[⸢ʔaː⸣toːtu ⸢ʔuː⸣totu]のように重ねて用いられる。⸢ウー⸣トートゥ[⸢ʔuː⸣toːtu]も同じ意味。","gloss":"あな尊と","glossKey":"あなみことと","ex":[{"t":"⸢アー⸣トートゥ ⸢ウー⸣トートゥ ⸢カンヌ⸣マイ ウ⸢ヤプス⸣ヌマイ シカイ⸢トゥ⸣ ニ⸢ガイ⸣シキ⸢オーサバ⸣ ウ⸢キ⸣シキ タ⸢ボー⸣ローリ","ipa":"[⸢ʔaː⸣toːtu ⸢ʔuː⸣toːtu ⸢kannu⸣mai ʔu⸢japusu⸣numai ʃi̥kai⸢tu⸣ ni⸢gai⸣ʃi̥ki ⸢ʔoːsaba⸣ ʔu⸢ki⸣ʃi̥ki ta⸢boː⸣roːri]","tr":"あな尊と、神様ご先祖様、しかと祈り上げ願いあげますので、お聞き届け受つけ賜りますようにお願い致します","a":106}]}]},{"id":"HATOMA.1453","orth":"アーニヤー","acc":"⸢アー⸣ニヤー","ipa":"[⸢ʔaː⸣nijaː]","senses":[{"pos":"名詞","def":"固有名詞。花城英行氏宅の名称。屋敷名。","gloss":"固有名詞","glossKey":"こゆうめいし","ex":[{"t":"⸢アー⸣ニヤーテー","ipa":"[⸢ʔaː⸣nijaːteː]","tr":"アーニヤー氏の家","a":2344,"note":"本来は、⸢アンヌ⸣ヤー[⸢ʔannu⸣jaː](分家した東の家)の意味であったのが、⸢花城家本家から分家した東の家」を確立した人名に変化したものであろう。"},{"t":"⸢アー⸣ニヤーテーヤ パ⸢ナシケー⸣ラヌ ⸢ヤーバカ⸣リティバン ⸢ナー","ipa":"[⸢ʔaː⸣nijaːteːja pa⸢naʃi̥keː⸣ranu ⸢jaːbaka⸣ritiban ⸢naː]","tr":"アーニヤーという家は花城家からの分家&lt;ということ&gt;らしいいねえ","a":2345}]}]},{"id":"HATOMA.45","orth":"アーヌイー","acc":"⸢アーヌ⸣イー","ipa":"[⸢ʔaːnu⸣ʔiː]","senses":[{"pos":"名詞","def":"粟飯。","gloss":"粟飯","glossKey":"あわめし","ex":[{"t":"⸢アーヌ⸣イーン ン⸢マー⸣ンドゥ ⸢マイヌイー⸣ヤ ウ⸢レー⸣ラン ⸢マービン⸣ドゥ ン⸢マー⸣ティ ⸣ムカーヤ","ipa":"[⸢ʔanu⸣ʔiːm ʔm⸢maː⸣ndu ⸢mainuʔiː⸣ja ʔu⸢reː⸣ram ⸢maːbin⸣du ʔm⸢maː⸣ti ⸣mukaːja]","tr":"粟飯も美味いが、米の飯はそれよりも更に&lt;ぞ&gt;美味しいというものだよ","a":114,"note":"普段は粳(うるち)粟と芋の飯を炊き、祝祭日には糯(もち)粟と米の飯を炊いたりした。"},{"t":"サ⸢ク⸣マイナ ム⸢チアー⸣ イ⸢リティ アーヌ⸣イーバ⸢カス⸣カー ム⸢チミーン⸣ ンジティ ン⸢マー⸣タン","ipa":"[sḁ⸢ku⸣maina mu⸢ʧiʔaː⸣ ʔi⸢riti ʔaːnu⸣ʔiː ba⸢kasu⸣kaː mu⸢ʧimiːn⸣ ʔnʤiti ʔm⸢maː⸣taŋ]","tr":"粳米に糯粟を入れて粟飯を炊くと粘り気が出て美味しかった","a":115}]}]},{"id":"HATOMA.46","orth":"アーヌイバチ","acc":"⸢アー⸣ヌ イ⸢バ⸣チ","ipa":"[⸢ʔaː⸣nu ʔi⸢ba⸣ʧi]","senses":[{"pos":"連語","def":"糯粟で作ったイ⸢バ⸣チ[ʔi⸢ba⸣ʧi](飯初)。粟の新穀を煮て円錐形に握ったもの。","gloss":"糯粟で作ったイ⸢バ⸣チ[ʔi⸢ba⸣ʧi](飯初)","glossKey":"もちあわでつくったい⸢ば⸣ち[[i⸢ba⸣⸣i]","ex":[{"t":"⸢アー⸣ヌ イ⸢バ⸣チ トゥ⸢クニ⸣ナ マ⸢チオーシ","ipa":"[ʔaː⸣nu ʔi⸢ba⸣ʧi tu⸢kuni⸣na ma⸢ʧiʔoːʃi]","tr":"粟の飯初を仏壇にお供えしなさい","a":116}]}]},{"id":"HATOMA.47","orth":"アーヌカイ","acc":"⸢アー⸣ヌ ⸢カイ","ipa":"[⸢ʔaː⸣nu ⸢kai]","senses":[{"pos":"連語","def":"粟粥。粟のお粥。","gloss":"粟粥","glossKey":"あわがゆ","ex":[{"t":"⸢アー⸣ヌ ⸢カイ⸣ タ⸢キ⸣ ッ⸢ふァーサ⸠ナー","ipa":"[⸢ʔaː⸣nu ⸢kai⸣ tḁ⸢ki⸣ f⸢faːsa⸠naː]","tr":"粟の粥を炊いてあげよう&lt;食べさせよう&gt;ね","a":117}]}]},{"id":"HATOMA.49","orth":"アーヌシジ","acc":"⸢アー⸣ヌ ⸣シジ","ipa":"[⸢ʔaː⸣nu ⸣ʃiʤi]","senses":[{"pos":"連語","def":"粟の粒。粟粒。","gloss":"粟の粒","glossKey":"あわのつぶ","ex":[{"t":"⸢アー⸣ヌ シ⸢ジ⸣ヌ ⸢ポッツァーリ ベー","ipa":"[⸢ʔaː⸣nu ʃi⸢ʤi⸣nu ⸢potʦaːri beː]","tr":"粟粒が散らばって&lt;散乱して&gt;いる","a":119}]}]},{"id":"HATOMA.48","orth":"アーヌパンビン","acc":"⸢アー⸣ヌ ⸢パン⸣ビン","ipa":"[⸢ʔaː⸣nu ⸢pam⸣biŋ]","senses":[{"pos":"連語","def":"粟の粉で作った芯のないてんぷら。「半片」の義か。","gloss":"粟の粉で作った芯のないてんぷら","glossKey":"あわのこなでつくったしんのないてんぷら","ex":[{"t":"⸢アー⸣ヌ ⸢パンビン⸣マー ン⸢マー⸣タン","ipa":"[⸢ʔaː⸣nu ⸢pambim⸣maː ʔm⸢maː⸣taŋ]","tr":"粟粉のてんぷら&lt;はんぺん&gt;はおいしかった","a":118}]}]},{"id":"HATOMA.50","orth":"アーヌピサシイー","acc":"⸢アー⸣ヌ ピ⸢サシ⸣イー","ipa":"[⸢ʔaː⸣nu pi̥⸢saʃi⸣ʔiː]","senses":[{"pos":"連語","def":"粟と米のこわいい(強飯)。米に粟を混ぜて炊き上げた御飯。","gloss":"粟と米のこわいい(強飯)","glossKey":"あわとこめのこわいい","ex":[{"t":"⸢アー⸣ヌ ピ⸢サシ⸣イーン ン⸢マー⸣タン","ipa":"[⸢ʔaː⸣nu pi̥⸢saʃi⸣ʔiːm ʔm⸢maː⸣taŋ]","tr":"米と粟のこわいい&lt;強飯&gt;も美味しかった","a":120}]}]},{"id":"HATOMA.51","orth":"アーヌプー","acc":"⸢アー⸣ヌ ⸣プー","ipa":"[⸢ʔaː⸣nu ⸣puː]","senses":[{"pos":"連語","def":"粟の穂。粟穂。沖縄古語「あわほ」[琉]。","gloss":"粟の穂","glossKey":"あわのほ","ex":[{"t":"⸢アー⸣ヌ ⸢プー⸣ヤ キン⸢キン⸣シ ⸢ミーリティ⸣ ダ⸢リッサー⸣リ ⸢ベー","ipa":"[⸢ʔaː⸣nu ⸢puː⸣ja kiŋ⸢kiŋ⸣ʃi ⸢miːriti⸣ da⸢rissaː⸣ri ⸢beː]","tr":"粟の穂は黄色く熟して&lt;稔って&gt;、垂れ下がっているよ","a":121}]}]},{"id":"HATOMA.52","orth":"アーヌミース","acc":"⸢アーヌミー⸣ス","ipa":"[⸢ʔaːnumiː⸣su]","senses":[{"pos":"名詞","def":"粟味噌。","gloss":"粟味噌","glossKey":"あわみそ","ex":[{"t":"⸢アーヌミー⸣ソーラン ⸢マイヌミース⸣ル ン⸢マー⸣タ","ipa":"[⸢ʔaːnumiː⸣soːram ⸢mainumiːsu⸣ru ʔm⸢maː⸣ta]","tr":"粟味噌よりも米味噌の方が美味しかった","a":122}]}]},{"id":"HATOMA.53","orth":"アーヌムチ","acc":"⸢アーヌ⸣ムチ","ipa":"[⸢ʔaːnu⸣muʧi]","senses":[{"pos":"名詞","def":"粟餅。粟を碾いて粉にし、それを練って成形し、蒸籠で蒸して造った餅。鳩間島ではめったに作らなかった。","gloss":"粟餅","glossKey":"あわもち","ex":[{"t":"⸢アーヌ⸣ムチ ス⸢ク⸣ル プ⸢スン オーッ⸣タン","ipa":"[⸢ʔaːnu⸣muʧi su̥⸢ku⸣ru pu̥⸢suŋ ʔoːt⸣taŋ]","tr":"粟餅を作る人もおられた","a":123}]}]},{"id":"HATOMA.57","orth":"アーヌン","acc":"⸢アー⸣ヌン","ipa":"[⸢ʔaː⸣nuŋ]","senses":[{"pos":"名詞","def":"(動)南京虫。","gloss":"南京虫","glossKey":"なんきんむし","ex":[{"t":"ム⸢カ⸣シェー タ⸢タミヌ⸣ピルナーン ⸢キン⸣ヌ ⸢ヌイ⸣ミーナーン ⸢アーヌン⸣マー シ⸢ディ⸣シタ","ipa":"[mu⸢ka⸣ʃeː tḁ⸢taminu⸣pirunaːŋ ⸢kin⸣nu ⸢nui⸣miːnaːŋ ⸢ʔaːnum⸣maː ʃi⸢di⸣ʃi̥ta]","tr":"昔は畳の縁にも着物の縫い目にも南京虫は湧いた&lt;孵化した&gt;ものだよ","a":128}],"domain":"動物"}]},{"id":"HATOMA.54","orth":"アーネー","acc":"⸢アー⸣ネー","ipa":"[⸢ʔaː⸣neː]","senses":[{"pos":"名詞","def":"東隣の家。","gloss":"東隣の家","glossKey":"とうりんのいえ","ex":[{"t":"⸢バン⸣テヌ ⸢アー⸣ネーヤ ア⸢ザテー イー⸣ネーヤ トゥ⸢ムシェー ヤッタ","ipa":"[⸢ban⸣tenu ⸢ʔaː⸣neːja ʔa⸢ʣateː ʔiː⸣neːja t⸢umuʃeː jatta]","tr":"我が家の東隣は東里家、西隣は宮良家&lt;友寄家&gt;であった","a":124}]}]},{"id":"HATOMA.59","orth":"アーパ","acc":"⸢アー⸣パ","ipa":"[⸢ʔaː⸣pa]","senses":[{"pos":"名詞","def":"老婆。待遇価値の落ちた、卑しめた表現。相手を多少見下した言い方。卑語に近い。","gloss":"老婆","glossKey":"ろうば","ex":[{"t":"ヤ⸢ナアーパ","ipa":"[ja⸢naʔaːpa]","tr":"いやな老婆、悪老婆","a":129},{"t":"ウ⸢ヌ アー⸣パー プ⸢スヌ⸣ クーカー イ⸢シマコーバ シー⸣ ヤ⸢リフン シーソー⸣ル","ipa":"[ʔu⸢nu ʔaː⸣paː pu⸢sunu⸣ kuːkaː ʔi⸢ʃimakoːba ʃiː⸣ ja⸢riɸuŋ ʃiːsoː⸣ru]","tr":"(その老婆は人が来ると石を投げたり、怒鳴りつけたりされる))","a":130}]}]},{"id":"HATOMA.60","orth":"アーパ","acc":"⸢アー⸣パ","ipa":"[⸢ʔaː⸣pa]","senses":[{"pos":"名詞","def":"⸢プーザン[⸢puːʣaŋ](帆桁)の最下段の桟の約四分の一上手に付けてある縄。サバニの帆桟やプーシンの帆桁を帆柱にしっかり結わえておくのに用いる縄。","gloss":"⸢プーザン[⸢puːʣaŋ](帆桁)の最下段の桟の約四分の一上手に付けてある縄","glossKey":"⸢ぷーざん[⸢pupupuapua]のさいかだんのさんのやくよんぶんのいちじょうずにつけてあるなわ","ex":[{"t":"⸢プー⸣ ピ⸢ク⸣カー ⸢アー⸣パ ギッ⸢ティ⸣ フ⸢バリ","ipa":"[⸢puː⸣ pi̥⸢ku⸣kaː ⸢ʔaː⸣pa git⸢ti⸣ ɸu⸢bari]","tr":"帆を上げ&lt;引い&gt;たら、アーパ縄を帆柱にぎゅっと縛れ","a":131}]}]},{"id":"HATOMA.61","orth":"アーパーマ","acc":"アー⸢パー⸣マ","ipa":"[ʔaː⸢paː⸣ma]","senses":[{"pos":"名詞","def":"老婆。お婆さん。-マ[-ma]は指小辞。親愛の情を示す。親しみをこめた表現。","gloss":"老婆","glossKey":"ろうば","ex":[{"t":"⸢ウン⸣ネーナ アー⸢パーマ⸣ヌ ⸢オー⸣ルン","ipa":"[⸢ʔun⸣neːna ʔaː⸢paːma⸣nu ⸢ʔoː⸣ruŋ]","tr":"その家にお婆さんがおられる","a":132},{"t":"⸢カン⸣ネナー ⸢コー⸣グマガリ アー⸢パーマ⸣ヌ ⸢オーッ⸣タン","ipa":"[⸢kan⸣nenaː ⸢koː⸣gumagari ʔaː⸢paːma⸣nu ⸢ʔot⸣taŋ]","tr":"あの家には腰の曲がった老婆がおられた","a":133}]}]},{"id":"HATOMA.62","orth":"アーパーレー","acc":"⸣アーパーレー","ipa":"[⸣ʔaːpaːreː]","senses":[{"pos":"名詞","def":"新室寿ぎ歌。正式の名称は、⸢ヤー⸣ヌ ⸢フンシキ⸣ アーパーレー[⸢jaː⸣nu ⸢ɸunʃi̥ki⸣ ʔaːpaːreː](新室の風水&lt;基礎固め・鎮め&gt;歌アーパーレー)という。歌は前半のナ⸢ガミ⸣ク[na⸢gami⸣ku](長め句)と後半のハ⸢ヤミ⸣ク[ha⸢jami⸣ku](早め句)からなる。ナ⸢ガミ⸣クでは新室の構造体を美辞麗句で歌い上げ(室誉めし)、後半のハヤミクでは新室の中の奇怪な形相の動物等を客観的に表現して「魔除け」とし、へんばい(反閇)して山の神、海の神、野の神々を鎮めて歌い終わる歌形構造を有する。新築の屋根が葺き上がる日没時になると、建築作業に従事した全員が作業着のまま新室の中に入って座り、儀式に参加した。先ず全員でアーパーレーの歌を歌う。鐘と銅鑼、太鼓に合わせて歌い終わる。そして村の道化役者をもって任ずる二人が出て家主の夫婦に扮し、新室が完成するまでの苦労話を面白おかしく語った後、抱いていた⸢ユイプス[⸢juipusu](藁人形)を家の中柱に結わえた後、⸢ワンヌン ビー⸣ティ ⸢バンヌン ビー⸣ティ シッ⸢トウイシットウイ(貴方も酔って、私も酔って、あな尊や)と叫んで神酒を棟桁に投げかけて終わる儀式","gloss":"新室寿ぎ歌","glossKey":"にいむろことほぎうた","ex":[]}]},{"id":"HATOMA.900","orth":"アーパーレー","acc":"⸣アーパーレー","ipa":"[⸣ʔaːpaːreː]","senses":[{"pos":"名詞","def":"新築家屋の室褒め儀礼。新築落成の夜、⸢ユイプスガナシ[⸢juipu̥suganaʃi](新築家屋の守護神、茅で作った人形)を迎え、アーパーレー歌謡を歌いながら祓い清める儀式。新室の当主とその妻に扮した男二人が新築に至るまでの苦労を話し、村人の協力に感謝の辞を述べ、神々へ新室守護の祈願をしたのち、参加者全員でアーパーレーを歌い、両足で強く床板や土間を踏み鳴らし、反閉(へんばい)をして邪気を祓う。","gloss":"新築家屋の室褒め儀礼","glossKey":"しんちくかおくのしつほめぎれい","ex":[{"t":"⸢アー⸣ザー ⸢ヤー⸣バ ス⸢ク⸣ローッタ ⸣ピンヌ ⸣アーパレーヤ ミリ⸢ミッ⸣タン","ipa":"[⸢ʔaː⸣ʣaː ⸢jaː⸣ba su̥⸢ku⸣roːtta ⸣pinnu ⸣ʔaːpaːreːja miri⸢mit⸣taŋ]","tr":"兄さんが家を作られた時のアーパーレーは見たことがある&lt;見てみた&gt;","a":1593}]}]},{"id":"HATOMA.901","orth":"アーパーレーウタ","acc":"⸣アーパーレーウタ","ipa":"[⸣ʔaːpaːreːʔuta]","senses":[{"pos":"名詞","def":"新室寿ぎの歌。新築家屋の邪気祓えの歌。ナ⸢ガミ⸣ク(長め声、第1連から第9連まで)とハ⸢ヤミ⸣ク(早め声、第10連から第37連まで)の二部構成になっている。アーパーレー(ナガミク) シルウチヌ メーヌウチニ ヤーバスクリ アンティス ウリユー ミユナーキャームイ (屋敷内の 広場&lt;屋敷&gt;内に 家を造って あるという それを 見なければならない) シルウチヌ メーヌウチニ ヤーバスクリ アンティス ウリユー ミユナーキャームイ (屋敷内の 広場&lt;屋敷&gt;内に 家を造って あるという それを 見なければならない) スブチダマ イシジバシ ヤーバスクリ アンティス ウリユー ミユナーキャームイ (菊目石を 礎石にして 家を造って あるという それを 見なければならない) カクガニバ パラーバシー ヤーバスクリ アンティス ウリユー ミユナーキャームイ (四角の鉄材を 柱にして 家を造って あるという それを 見なければならない) バンゾンガニバ ヌキギバシー ヤーバスクリ アンティスー ウリユー ミユナーキャームイ (曲尺&lt;曲金&gt;を 貫木にして 家を造って あるという それを 見なければならない) クルキカニバ キタバシー ヤーバスクリ アンティスー ウリユー ミユナーキャームイ (黒鉄材を 桁材にして 家を造って あるという それを 見なければならない) ナンチャクガニ ウダティシー ヤーバスクリ アンティスー ウリユー ミユナーキャームイ (銀や金を 梲 ウダチ &lt;棟木支え&gt;にして 家を造って あるという それを 見なければならない) カクガニバ ミニバシー ヤーバスクリ アンティスー ウリユー ミユナーキャームイ (四角の鉄材を 棟木にして 家を造って あるという それを 見なければならない) ヤーカラダキバ キチバシー ヤーバスクリ アンティスー ウリユー ミユナーキャームイ (竹を 垂木にして 家を造って あるという それを 見なければならない) ヤー タマシダル ユチルバシー ヤーバスクリアンティスー (ああ 玉のような 簀垂れを桟にして 家を造って あるという) ヤー トゥルパニバ ガヤーバシー ヤーバスクリ アンティスー (ああ 羽毛を 萱にして 家を造って あるという) ヤースルガニバ ティブクシー ヤーバスクリ アンティスー (ああ 白金&lt;銀&gt;を 手鉾にして 家を造って あるという) ヤー イツピピルバ シミナーシー ヤーバスクリ アンティスー (ああ 絹糸の縄で 締縄にして 家を造って あるという) ヤー ダディクダキバ アムヌバシー ヤーバスクリ アンティスー (ああ ダディク岳産の竹&lt;ダディク竹&gt;を 甍を覆い被せる竹簾にして 家を造って あるという) ヤー ナンツァヨージバ マーリザシー ヤーバスクリ アンティスー (ああ 銀簪を 甍どめにして 家を造って あるという) ヤー クンピピルバ カキナーシー ヤーバスクリ アンティスー (ああ 黒絹糸を 締め縄にして 家を造って あるという) ヤー クヌヤーヌ ウチナカー テイダヌカタ アンティスー (ああ この家の内に 太陽の絵が あるという) ヤー ティダヌカタミリバ ティリユーナードゥシーユール (ああ 太陽の絵を見ると 照り輝いている) ヤー クヌヤーヌ ウチナカー シキヌカタ アンティス (ああ この家の内に 月の絵が あるという) ヤー シキヌカタミリバ ガリユーナードゥシーユール (ああ 月の絵を見ると 輝いている) ヤー クヌヤーヌ ウチナカー ピトゥヌカタアンティス (ああ この家の内に 人の絵があるという) ヤー ピトゥヌカタミリバ バガウヤードゥシーユール (ああ 人の絵を見ると 奪い合いをしている) ヤー クヌヤーヌ ウチナカー ンーマヌカタ アンティス (ああ この家の内に 馬の絵が あるという) ヤー ンーマヌカタミリバ キリユーナードゥ シーユール (ああ 馬の絵を見ると 蹴り合っている) ヤー クヌヤーヌウチナカー ウシヌカタ アンティス (ああ この家の内に 牛の絵が あるという) ヤー ウシヌカタミリバ シキユーナードゥシーユール (ああ 牛の絵を見ると 突き合っている) ヤー クヌヤーヌウチナカー インヌカタ アンティス (ああ この家の内に 犬の絵が あるという) ヤー インヌカタミリバ フイユナードゥシーユール (ああ 犬の絵を見ると 噛み付いている) ヤー クヌヤーヌウチナカー マヤヌカタ アンテイス (ああ この家の内に 猫の絵が あるという) ヤー マヤヌカタミリバ ガジユーナードゥシーユール (ああ 猫の絵を見ると 引っ掻き回している) ウクダカエンヤー カニブーヤーヌ サイヤリ (この数の物が 鋼材で造った家の 守護神&lt;支え&gt;である) ウクダカエンヤー ニヌブーヤーヌ サイヤリ (この数の物が 木材で造った家の 守護神&lt;支え&gt;である) アーパレー キユーヌピーバ ムトゥバシ (アーパーレー 今日の日を 基本にして) アーパーレー クガニピーバ ニシキシ (アーパーレー 黄金の日を 基礎にして) アーパーレー イシカマーシ イワイス (アーパーレー 五日続けて 祝おう) アーパーレー ナンカマーシ イワイス (アーパーレー 七日続けて 祝おう) アーパーレー トゥズミヌ カイサヤ (アーパーレー 完成した姿の 美しいことよ)","gloss":"新室寿ぎの歌","glossKey":"にいむろことほぎのうた","ex":[]}]},{"id":"HATOMA.63","orth":"アービ","acc":"⸢アー⸣ビ","ipa":"[⸢ʔaː⸣bi]","senses":[{"pos":"名詞","def":"(動)貝の名。あわび。ミミガイ科の巻貝の一種。和名、イボアナゴウ。殻長5~7センチ。殻の表面にイボまたはコブ状の突起ができる。穴が数個あり、イノーの浅い岩礁に生息する。煮たり,茹でたりして食する。","gloss":"貝の名","glossKey":"かいのめい","ex":[{"t":"⸢アー⸣ベー ユディティ シ⸢タ⸣ディ ⸣シキティ ッ⸢ふー⸣カー ン⸢マー⸣ン","ipa":"[⸢ʔaː⸣beː ⸣juditi ʃi⸢ta⸣di ⸣ʃikiti f⸢fuː⸣kaː ʔm⸢maː⸣ŋ]","tr":"あわびは茹でて醤油をつけて食べるとおいしい","a":134}],"domain":"動物"}]},{"id":"HATOMA.64","orth":"アーピキウシ","acc":"⸢アーピキ⸣ウシ","ipa":"[⸢ʔaːpiki⸣ʔuʃi]","senses":[{"pos":"名詞","def":"粟碾き臼。粟を精白する石臼。イ⸢ソーシ[ʔi⸢soːʃi](大豆を碾く石臼)に似た形をしているが、臼に歯がない。","gloss":"粟碾き臼","glossKey":"あわひきうす","ex":[{"t":"⸢アーピキウシ⸣ヌ イ⸢ソーシ⸣ナー ⸢パー⸣ヤ タ⸢ティラ⸣ヌ","ipa":"[⸢ʔaːpikiʔuʃi⸣nu ʔi⸢soːʃi⸣naː ⸢paː⸣ja ta⸢tira⸣nu]","tr":"粟碾き臼には歯は立てない","a":135}]}]},{"id":"HATOMA.65","orth":"アープール","acc":"⸢アープー⸣ル","ipa":"[⸢ʔaːpuː⸣ru]","senses":[{"pos":"名詞","def":"粟の豊作祈願祭。粟の豊年祭。対語は⸢マイプール[⸢maipuːru](稲の豊年祭)。鳩間島の豊年祭は稲の豊作祈願が主で、併せて五穀の豊作祈願もなされる。","gloss":"粟の豊作祈願祭","glossKey":"あわのほうさくきがんまつり","ex":[{"t":"フ⸢シマ⸣ヌ ⸢プー⸣ロー ⸢アープールー⸣バ ム⸢トゥ⸣シ ⸢ソー⸣ルティバン","ipa":"[ɸu⸢ʃima⸣nu ⸢puː⸣roː ⸢ʔaːpuːru⸣ba mu⸢tu⸣ʃi ⸢soː⸣rutibaŋ]","tr":"黒島の豊年祭は粟の豊年祈願を中心にしてなされるとのことだ","a":136}]}]},{"id":"HATOMA.67","orth":"アーフキカーフキ","acc":"⸢アーフキカー⸣フキ","ipa":"[⸢ʔaːɸukikaː⸣ɸu̥ki]","senses":[{"pos":"副詞","def":"荒い息づかいをして。激しく呼吸をして。喘ぎあえぎ。","gloss":"荒い息づかいをして","glossKey":"あらいいきづかいをして","ex":[{"t":"⸢アーフキカー⸣フキ ⸢シェー⸣ティ ⸢ヤットゥ⸣シ ⸣パリ ⸢クー⸣タ","ipa":"[⸢ʔaːɸu̥kikaː⸣ɸu̥ki ⸢ʃeː⸣ti jat⸢tu⸣ʃi ⸣pari ⸢kuː⸣ta]","tr":"喘ぎ喘ぎしながらやっとのことで走ってきた","a":142}]}]},{"id":"HATOMA.68","orth":"アーブク","acc":"⸢アーブ⸣ク","ipa":"[⸢ʔaːbu⸣ku]","senses":[{"pos":"名詞","def":"泡(あわ)。あぶく。気泡。豆腐を煮詰める際に沸きあがる泡。「沫蕩、此をば阿和那伎(アワなぎ)と云ふ」『日本書紀 神代上』。","gloss":"泡(あわ)","glossKey":"あわ","ex":[{"t":"サッ⸢フン⸣シ キン ア⸢ラシトゥンティ シター アーブク⸣ヌ ⸢イッ⸣パイ ⸣ンジケーン","ipa":"[saɸ⸢ɸuŋ⸣ʃi kiŋ ʔa⸢raʃi̥tuntiʃi̥taː ʔaːbuku⸣nu ⸢ʔip⸣pai ⸣ʔndʒikeːŋ]","tr":"石鹸で着物を洗おうとしたら泡がたくさん出てきた","a":143}]}]},{"id":"HATOMA.66","orth":"アーフクン","acc":"⸢アーフクン","ipa":"[⸢ʔaːɸukuŋ]","senses":[{"pos":"自動詞","def":"あえぐ(喘ぐ)。激しく呼吸する。息切れする。「泡吹く」の転訛したものか。","gloss":"あえぐ(喘ぐ)","glossKey":"あえぐ","ex":[{"t":"カ⸢キッツァー⸣シ ⸣パルカー ⸢アーフクンドゥ キュー⸣ヤ ⸢アーフカンシェン","ipa":"[kḁ⸢kitʦaː⸣ʃi ⸣parukaː ⸢ʔaːɸu̥kundu kjuː⸣ja ⸢ʔaːɸu̥kaŋʃeŋ]","tr":"駆けて走ると激しくあえぐが、今日は喘がなかった","a":137},{"t":"ヌー⸢スンティ⸣ アイニ ⸢アーフケー⸣ティ ⸢アーク⸣ワ","ipa":"[⸣nuː⸢sunti⸣ ʔaini ⸢ʔaːɸukeː⸣ti ⸢ʔaːku⸣wa]","tr":"何故そんなに喘いでいるのか","a":138},{"t":"ウ⸢ビッ⸣チン ⸣パリティ ⸢アーフクプソー⸣ ブ⸢ラーヌ","ipa":"[ʔu⸢bit⸣ʦim ⸣pariti ⸢ʔaːɸu̥ku⸣ pu̥⸢soː⸣ bu⸢raːnu]","tr":"これぽっち走って喘ぐ人はいない","a":139},{"t":"⸢マー⸣ビン ⸢アーフケー⸣ ミサムヌ","ipa":"[⸢maː⸣biŋ ⸢ʔaːɸu̥keː⸣ misamunu]","tr":"もっと喘げばいいのに","a":140},{"t":"⸢パー⸣ク ⸢アーフキ⸣バ","ipa":"[⸢paː⸣ku ⸢ʔaːɸu̥ki⸣ba]","tr":"早く喘げよ","a":141}]}]},{"id":"HATOMA.111","orth":"アーミーボーサー","acc":"⸢アーミーボー⸣サー","ipa":"[⸢ʔaːmiːboː⸣saː]","senses":[{"pos":"名詞","def":"雨宿り。","gloss":"雨宿り","glossKey":"あまやどり","ex":[{"t":"ア⸢タアミヌ フータ⸣ル ⸢ウン⸣ネーナ ⸢アーミーボー⸣サー ⸢シーティ クー⸣タ⸢ダー","ipa":"[ʔa⸢taʔamini ɸuːta⸣ru ⸢ʔun⸣nena ⸢ʔaːmiːboː⸣saː ⸢ʃiːti kuː⸣ta⸢daː]","tr":"にわか雨&lt;驟雨&gt;が降ったので、あの家に雨宿りをして来たのだよ","a":249}]}]},{"id":"HATOMA.55","orth":"アーミキ","acc":"⸢アー⸣ミキ","ipa":"[⸢ʔaː⸣miki]","senses":[{"pos":"名詞","def":"粟で造った神酒。","gloss":"粟で造った神酒","glossKey":"あわでぞうったしんしゅ","ex":[{"t":"⸢アー⸣ミキ マ⸢ラソー⸣リ","ipa":"[⸢ʔaː⸣miki ma⸢rasoː⸣ri]","tr":"粟の神酒を醸造なさいませ","a":125}]}]},{"id":"HATOMA.56","orth":"アームチ","acc":"⸢アー⸣ムチ","ipa":"[⸢ʔaː⸣muʧi]","senses":[{"pos":"名詞","def":"粟餅。糯粟を石臼で挽いた粉でつくった餅。","gloss":"粟餅","glossKey":"あわもち","ex":[{"t":"⸢アー⸣ムチン ッ⸢ふァイミッ⸣タン","ipa":"[⸢ʔaː⸣muʧiŋ f⸢faimit⸣taŋ]","tr":"粟餅も食べてみたことがある","a":126},{"t":"ム⸢チアーシ⸣ル ⸢アー⸣ムチェー ス⸢ク⸣ル","ipa":"[mu⸢ʧiʔaːʃi⸣ru ⸢ʔaː⸣muʧeː su̥⸢ku⸣ru]","tr":"糯粟で&lt;ぞ&gt;粟餅は作る","a":127}]}]},{"id":"HATOMA.113","orth":"アームル","acc":"⸢アー⸣ムル","ipa":"[⸢ʔaː⸣muru]","senses":[{"pos":"名詞","def":"泡盛。島酒。","gloss":"泡盛","glossKey":"あわもり","ex":[{"t":"⸢アー⸣ムルン ⸣ウンミサクン マ⸢ラソー⸣リ⸢ヨー","ipa":"[⸢ʔaː⸣muruŋ ʔummisakum ma⸢rasoː⸣ri⸢joː]","tr":"泡盛も芋神酒も醸造なされよ&lt;生まらせなされよ&gt;","a":250,"note":"一般的には、サ⸢キ⸣ タルン[sḁ⸢ki⸣ tarunŋ](酒を醸造する)というが、⸢アー⸣ムル(泡盛の神酒)や、⸢アーミサ⸣ク(粟神酒)、⸣ウンミサク[⸣ʔummisaku](芋神酒)は、マ⸢ラスン[ma⸢rasuŋ](生まれさせる)という。"},{"t":"イ⸢クサユー⸣ヌ ⸣アトゥ パ⸢トゥ⸣マナーン ⸢アー⸣ムルサキ タ⸢ローッ⸣タン","ipa":"[ʔi⸢kusajuː⸣nu ⸣ʔatu pḁ⸢tu⸣manaːŋ ⸢ʔaː⸣murusaki ta⸢roːt⸣taŋ]","tr":"終戦後、鳩間島にも泡盛酒を醸造された","a":251}]}]},{"id":"HATOMA.70","orth":"アーメー","acc":"⸢アー メー","ipa":"[⸢ʔaː meː]","senses":[{"pos":"感動詞","def":"ああ、もう。もう大変だ。始末に負えない。","gloss":"ああ、もう","glossKey":"ああ、もう","ex":[{"t":"⸢アー メー⸣ ナ⸢ラ⸣ヌ ク⸢ヌ⸣ イトー ア⸢ザー⸣リ ⸣クザーリ シ⸢ティ ユー⸣ゾー ⸢ナー⸣ヌ","ipa":"[⸢ʔaː meː⸣ na⸢ra⸣nu ku⸢nu⸣ ʔitoː ʔa⸢ʣaː⸣ri ⸣kuʣaːri ʃi̥⸢ti juː⸣ʣoː ⸢naː⸣nu]","tr":"ああ、もう、だめだ。どうにもならない。この糸は散々に縺れて養生&lt;手当て&gt;出来ない。手がつけられない","a":144}]}]},{"id":"HATOMA.71","orth":"アーヤ","acc":"⸢アー⸣ヤ","ipa":"[⸢ʔaː⸣ja]","senses":[{"pos":"名詞","def":"父。父親。親族名称。呼称。明治生まれの古老が用いる。[ʔa](吾)・[uja](親) → [⸢ʔaː⸣ja](父)、「~よし名は告らせ父母&lt;オヤ&gt;はしるとも。万、363」の転訛したものか。多くの若年層では、⸣アチャー[⸣ʔaʧaː](父。父親。親族名称、呼称)ともいう。これは、⸢ア(吾)・ヂ「知(父『古事記中、應神謡49』)・ア(*a&lt;指小辞&gt;)」によって形成されたものであろう。また、⸣イーヤ[⸣ʔiːja](父。名称、呼称。?i:ja&lt;uja(万、363の転訛したものか)。⸣ユージェヌ ⸣イーヤ[⸣juːʤenu ⸣ʔiːja]&lt;松竹家のお父さん&gt;)という家もあり、⸢チャー⸣チャー[⸢ʧaː⸣ʧaː](父。名称。⸢ヨー⸣カヤーヌ ⸢チャー⸣チャー[⸢joː⸣kajaːnu ⸢ʧaː⸣ʧaː]&lt;西原家のお父さん&gt;)という家もある。","gloss":"父","glossKey":"ちち","ex":[{"t":"⸢バン⸣テヌ ⸢アー⸣ヤー サ⸢キゾーグ","ipa":"[⸢ban⸣tenu ⸢ʔaː⸣jaː sḁ⸢kiʣoːgu]","tr":"私の父は酒上戸だ","a":145},{"t":"アー⸢ヤー ワー マー オール⸣ワ","ipa":"[ʔaː⸢jaː waː maː ʔoːru⸣wa]","tr":"お父さん、貴方は何処へいらっしゃい&lt;行かれ&gt;ますか","a":146},{"t":"ク⸢レー バン⸣テヌ ⸢アー⸣ヤ","ipa":"[ku⸢reː ban⸣tenu ⸢ʔaː⸣ja]","tr":"これは私の家のお父さんです&lt;名称&gt;","a":147},{"t":"アー⸢ヤー キュー⸣ヤ イ⸢ソー オールン","ipa":"[ʔaː⸢jaː kjuː⸣ja ʔi⸢soː ʔoːruŋ]","tr":"(お父さん、今日は漁にいらっしゃいますか&lt;呼称&gt;))","a":148}]}]},{"id":"HATOMA.72","orth":"アーヤブイ","acc":"⸢アー⸣ヤブイ","ipa":"[⸢ʔaː⸣jabui]","senses":[{"pos":"名詞","def":"(海底地名)海底地名。⸢アー⸣ヤ(お父さん。「吾親」の転訛したもの。寄合三戸氏)が立てられた、ブイ(航路標識。英語のbuoy&lt;浮標&gt;の転訛)のある曽根の意。タ⸢カビ⸣ヌ フ⸢チ[tḁ⸢kabi⸣nu ɸu̥⸢ʧi](高干瀬の津口)を回って鳩間港へ向かう途中にある","gloss":"海底地名","glossKey":"かいていちめい","ex":[],"domain":"海底地名"}]},{"id":"HATOMA.137","orth":"アーラ","acc":"⸢アーラ","ipa":"[⸢ʔaːra]","senses":[{"pos":"名詞","def":"東。太陽の上がる方向。「上がる辺」の転訛したものか。⸢アーンタ[⸢ʔaːnta](東方、東の所)ともいう。⸢アーラキ[⸢ʔaːraki](東側、東の所)参照。","gloss":"東","glossKey":"ひがし","ex":[{"t":"トゥ⸢ロー アーラー ンカイ⸣ トゥ⸢ビパッ⸣タツォー","ipa":"[tu⸢roː ʔaːraː ʔŋkai⸣ tu⸢bipat⸣taʦoː]","tr":"鳥は東の方へ向かって飛んでいったそうだ","a":288},{"t":"ティダー ⸢アーラーラ⸣ル ⸢ヌール","ipa":"[⸣tidaː ⸢ʔaːraːra⸣ru ⸢nuːru]","tr":"太陽は東から&lt;ぞ&gt;昇る","a":289}]}]},{"id":"HATOMA.246","orth":"アーラーッサーケーン","acc":"⸢アーラー⸣ ッ⸢サー⸣ケーン","ipa":"[⸢ʔaːraː⸣ s⸢saː⸣keːŋ]","senses":[{"pos":"文","def":"東の空は白んできた(夜が白白と明けてきた)","gloss":"東の空は白んできた(夜が白白と明けてきた)","glossKey":"ひがしのそらはしろんできた","ex":[]}]},{"id":"HATOMA.138","orth":"アーラキ","acc":"⸢アーラキ","ipa":"[⸢ʔaːraki]","senses":[{"pos":"名詞","def":"東側。東の所。","gloss":"東側","glossKey":"ひがしがわ","ex":[{"t":"パ⸢タキ⸣ヌ ⸢アーラキ⸣ナー ⸢バンスル⸣ヌ ムイ⸢ベー⸣ン","ipa":"[pḁ⸢taki⸣nu ⸢ʔaːraki⸣naː ⸢bansuru⸣nu mui⸢beː⸣ŋ]","tr":"畑の東側に蕃ざくろが生えている","a":290}]}]},{"id":"HATOMA.124","orth":"アーラシパク","acc":"⸢アーラシパク","ipa":"[⸢ʔaːraʃipaku]","senses":[{"pos":"名詞","def":"蒸し器。蒸し箱。板で作った箱状の蒸篭で、二段重ねで用いる蒸し器。甑とは形が異なる。","gloss":"蒸し器","glossKey":"むしうつわ","ex":[{"t":"⸢アーラシパコー ベー⸣ナーン ⸢アッ⸣タン","ipa":"[⸢ʔaːraʃipakoː beː⸣naːŋ ⸢ʔat⸣taŋ]","tr":"蒸し箱は我が家にもあった","a":267}]}]},{"id":"HATOMA.73","orth":"アーラスン","acc":"⸢アーラ⸣スン","ipa":"[⸢ʔaːra⸣suŋ]","senses":[{"pos":"他動詞","def":"配る。配分する。公平に分配する。沖縄古語「あらす(有らす)」[古・琉]。","gloss":"配る","glossKey":"くばる","ex":[{"t":"⸢コー⸣シェー ⸢ムール⸣ニ ⸢ミックナー アーラ⸣シバ","ipa":"[⸢koː⸣ʃeː ⸢muːru⸣ni ⸢mikkunaː ʔaːra⸣ʃiba]","tr":"菓子は皆に三個ずつ配りなさいよ","a":149},{"t":"⸢アーラ⸣スンティ ウ⸢ムーン⸣ドゥ ⸢ムール⸣ネー ⸢アーラサラ⸣ヌ","ipa":"[⸢ʔaːra⸣sunti ʔu⸢muːn⸣du ⸢muːru⸣neː ⸢ʔaːrasara⸣nu]","tr":"配ろうと思うが、全員には配れない","a":150},{"t":"⸢ピーチ⸣ナー ⸢アーラ⸣シ ⸣ミサカー ⸢アーラ⸣ス ⸣クトー ⸣ナルン","ipa":"[⸢piːʧi⸣naː ⸢ʔaːra⸣ʃi ⸣misakaː ⸢ʔaːra⸣su ⸣ku̥toː ⸣naruŋ]","tr":"一つずつ配って良ければ配ることは出来る","a":151},{"t":"⸢アーラ⸣シェー ⸣ミサムヌ","ipa":"[⸢ʔaːra⸣ʃeː ⸣misamunu]","tr":"配れば良いのに","a":152,"note":"均等に配分する。"},{"t":"ク⸢ヌ⸣ ム⸢チェー ヤーニン⸣ズ マー⸢タキナー アーラ⸣シ","ipa":"[ku⸢nu⸣ mu⸢ʧeː jaːnin⸣ʣu maː⸢takinaː ʔaːra⸣ʃi]","tr":"この餅は家族全員に均等に配分しなさい","a":153},{"t":"⸢アーラサ⸣リン","ipa":"[⸢ʔaːrasa⸣rin]","tr":"均等に配分できる","a":154}]}]},{"id":"HATOMA.74","orth":"アーラスン","acc":"⸢アーラスン","ipa":"[⸢ʔaːrasuŋ]","senses":[{"pos":"他動詞","def":"慌てさせる。騒がせる。急がせる。","gloss":"慌てさせる","glossKey":"あわてさせる","ex":[{"t":"ウ⸢リヌ⸣ クーカー プ⸢ス アーラスンダ⸣ ウ⸢ティシゥカ⸣ヌ","ipa":"[ʔu⸢rinu⸣ kuːkaː pu̥⸢su ʔaːrasunda⸣ ʔu⸢tisi̥ka⸣nu]","tr":"彼が来ると人を騒がせるから、落ち着かない","a":155},{"t":"プ⸢ス アーラス⸣ クトー ス⸢ナ","ipa":"[pu̥⸢su ʔaːrasu⸣ ku̥toː su⸢na]","tr":"人を慌てさせることはするな","a":156},{"t":"⸢アーラサンドー⸣シ シ⸢グトゥ⸣ シ⸢ミリ","ipa":"[⸢ʔaːrasandoː⸣ʃi ʃi⸢gutu⸣ ʃi⸢miri]","tr":"慌てさせないで仕事をさせなさい","a":157},{"t":"⸢アーラシェー⸣ ミサムヌ","ipa":"[⸢ʔaːraʃeː⸣ misamunu]","tr":"慌てさせたら良いのに","a":158},{"t":"⸢アーラシ⸣バ","ipa":"[⸢ʔaːraʃi⸣ba]","tr":"慌てさせなさいよ","a":159}]}]},{"id":"HATOMA.75","orth":"アーラスン","acc":"⸢アーラスン","ipa":"[⸢ʔaːrasuŋ]","senses":[{"pos":"他動詞","def":"沸騰させて吹きこぼれさせる。吹きあげさせる。「上がらす」の転訛したもの。","gloss":"沸騰させて吹きこぼれさせる","glossKey":"ふっとうさせてふきこぼれさせる","ex":[{"t":"⸣ドゥク ⸣ピー ⸢モース⸣カー ⸣スー ⸢アーラスン⸣ダー ⸢アーラサン⸣ヨーニ ⸢ピー⸣ヤ ピ⸢キ⸣バ","ipa":"[⸣duku ⸣piː ⸢moːsu⸣kaː ⸣suː ⸢ʔaːrasun⸣daː ⸢ʔaːrasaŋ⸣joːni ⸢piː⸣ja pi̥⸢ki⸣ba]","tr":"あまり火を焚くとお汁を吹き零れさせるぞ。吹き零れさせないように、火を引けよ","a":160},{"t":"⸢アーラシ⸣ ミサカー ⸢アーラス⸣クトゥン ⸣ナルン","ipa":"[⸢ʔaːraʃi⸣ misakaː ⸢ʔaːrasu⸣ ku̥tun ⸣naruŋ]","tr":"吹き零れさせて良ければ、吹き零れさせることもできる","a":161},{"t":"ナー⸢イ アーラシェー⸣ ミサムヌ","ipa":"[naː⸢i ʔaːraʃeː ⸣misamunu]","tr":"ただ放置して吹き零れさせれば良いのに","a":162},{"t":"⸢マー⸣ビン ⸢アーラシ","ipa":"[⸢maː⸣biŋ ⸢ʔaːraʃi]","tr":"もっと吹き零させろ","a":163}]}]},{"id":"HATOMA.76","orth":"アーラスン","acc":"⸢アーラスン","ipa":"[⸢ʔaːrasuŋ]","senses":[{"pos":"他動詞","def":"餅やカステラ等を蒸す。","gloss":"餅やカステラ等を蒸す","glossKey":"もちやかすてらなどをむす","ex":[{"t":"ム⸢チ アーラスン","ipa":"[mu⸢ʧi ʔaːrasuŋ]","tr":"餅を蒸す&lt;蒸して煮る&gt;","a":164},{"t":"ク⸢リ⸣シェー ⸢アーラサラヌ","ipa":"[ku⸢ri⸣ʃeː ⸢ʔaːrasaranu]","tr":"これでは蒸されない","a":165},{"t":"⸢クシ⸣キシェー ⸢アーラシ ヤッ⸣サン","ipa":"[⸢kuʃi̥⸣kiʃeː ⸢ʔaːraʃi jas⸣saŋ]","tr":"甑では蒸しやすい","a":166},{"t":"⸢アーラス⸣ プ⸢ソー⸣ ブ⸢ラーヌ","ipa":"[⸢ʔaːrasu⸣ pu̥⸢soː⸣ bu⸢raːnu]","tr":"蒸す人はいない","a":167},{"t":"⸢パー⸣ク ⸢アーラシェー⸣ ミサムヌ","ipa":"[⸢paː⸣ku ⸢ʔaːraʃeː⸣ misamunu]","tr":"早く蒸せば良いのに","a":168},{"t":"ム⸢チ アーラシ⸣バ","ipa":"[mu⸢ʧi ʔaːraʃi⸣ba]","tr":"餅を蒸しなさい","a":169},{"t":"⸢ヨイ⸣ヌ ア⸢ラシコーシ アーラスンティ キッ⸣ス ⸢シーベー","ipa":"[⸢joi⸣nu ʔa⸢raʃikoːʃi ʔaːrasunti kis⸣su ⸢ʃiːbeː]","tr":"お祝いの蒸し餅&lt;蒸し菓子&gt;を蒸し上げようとして急いでいる","a":170},{"t":"⸣アブジェ ⸢ソーニヨイヌヨイヌ⸣ ア⸢ラシコーシ アーラスンティ ベー⸠ダー","ipa":"[ʔabudʒeː ⸢soːnijoinu⸣ ʔa⸢raʃikoːʃi ʔaːrasunti beː⸠daː]","tr":"おじいさんの生年祝いの蒸し菓子を作ろうと&lt;蒸し上げよう&gt;としているんだよ","a":171}]}]},{"id":"HATOMA.125","orth":"アーラスン","acc":"⸢アーラスン","ipa":"[⸢ʔaːrasuŋ]","senses":[{"pos":"他動詞","def":"臼の歯をたてる。","gloss":"臼の歯をたてる","glossKey":"うすのはをたてる","ex":[{"t":"ウ⸢シ⸣ヌ ⸣パー ⸢アーラスンティ⸣ ウ⸢ムーン⸣ドゥ ⸢ヌン⸣ヌ ⸢ナーン⸣ ベーティ ⸢アーラサラヌ","ipa":"[ʔu⸢ʃi⸣nu ⸣paː ⸢ʔaːrasunti⸣ ʔu⸢muːn⸣du ⸢nun⸣nu ⸢naːm⸣ beːti ⸢ʔaːrasaranu]","tr":"臼の歯を立てようと思うが、鑿が無いので歯が立てられない","a":268},{"t":"⸣ドゥーシ ⸢アーラシ⸣ ミサカー ⸢アーラス⸣ クトー ⸣ナルン","ipa":"[⸣duːʃi ⸢ʔaːraʃi⸣ misakaː ⸢ʔaːrasu⸣ ku̥toː ⸣naruŋ]","tr":"自分で臼の歯を立てて良ければ立てることは出来る","a":269},{"t":"⸣ドゥーシ ⸢アーラシェー⸣ ミサムヌ","ipa":"[⸣duːʃi ⸢ʔaːraʃeː⸣ misamunu]","tr":"自分で臼の歯を立てればいいのに","a":270},{"t":"ウ⸢シ⸣ヌ パー アーラシ","ipa":"[ʔu⸢ʃi⸣nu ⸣paː ⸢ʔaːraʃi]","tr":"臼の歯をたてなさい。臼の歯を鑿で削ってたてなさい","a":271,"note":"ウ⸢シ⸣ヌ ⸣パー ⸣タトゥン[ʔu⸢ʃi⸣nu ⸣paː ⸣tḁtuŋ](臼の歯を立てる)ともいう"}]}]},{"id":"HATOMA.127","orth":"アーラスン","acc":"⸢アーラスン","ipa":"[⸢ʔaːrasuŋ]","senses":[{"pos":"他動詞","def":"せき立てる。急がせる。慌てさせる。⸢アールン[⸢ʔaːruŋ](自動、急ぐ。暴れる)の他動詞。","gloss":"せき立てる","glossKey":"せきたてる","ex":[{"t":"シ⸢トゥム⸣ティ ⸢オーパ⸣ヤーラ ⸢ワン アーラサリティ⸣ ブ⸢ガ⸣リ ⸢ナー⸣ヌ","ipa":"[ʃi⸢tumu⸣ti ⸢ʔoːpa⸣jaːra ⸢wan ʔaːrasariti⸣ bu⸢ga⸣ri ⸢naː⸣nu]","tr":"早朝から君にせかされて疲れてしまった","a":272}]}]},{"id":"HATOMA.129","orth":"アーラッパー","acc":"⸢アーラッパー","ipa":"[⸢ʔaːrappaː]","senses":[{"pos":"名詞","def":"動作が荒々しいこと。荒っぽい人。粗雑な人。手荒に扱う人。手荒いこと。粗略に扱う人。","gloss":"動作が荒々しいこと","glossKey":"どうさがあらあらしいこと","ex":[{"t":"ウ⸢レー アーラッパー⸣ ヤ⸢ルンダ⸣ シ⸢グトゥ⸣ シ⸢ミルバン ダーッ⸣サー ⸢シーユーサヌ","ipa":"[ʔu⸢reː ʔaːrappaː⸣ ja⸢runda⸣ ʃi⸢gutu⸣ ʃi⸢miruban daːs⸣saː ⸢ʃiːjuːsanu]","tr":"彼&lt;あれ&gt;は荒っぽい人だから、仕事をさせても立派に&lt;上手に&gt;できない","a":276}]}]},{"id":"HATOMA.130","orth":"アーラッパーシー","acc":"⸢アーラッパーシー","ipa":"[⸢ʔaːrappaːʃiː]","senses":[{"pos":"名詞","def":"粗雑にすること。荒っぽくすること。乱暴に扱うこと。","gloss":"粗雑にすること","glossKey":"そざつにすること","ex":[{"t":"ア⸢ラッパーシー スー⸣ プ⸢スンマー⸣ ク⸢レー⸣ シ⸢ミララヌ","ipa":"[ʔa⸢rappaːʃiː suː⸣ pu̥⸢summaː⸣ ku⸢reː⸣ ʃi⸢miraranu]","tr":"粗雑にする&lt;乱暴に扱う&gt;人には、これはさせられない","a":277}]}]},{"id":"HATOMA.131","orth":"アーラニバル","acc":"⸢アーラ⸣ニバル","ipa":"[⸢ʔaːra⸣nibaru]","senses":[{"pos":"名詞","def":"(動)魚の名。和名、マハタ。スズキ科の魚。体長1メートル以上に成長する。鳩間島の⸢マイ⸣ズニ[⸢mai⸣ʣuni](前曽根)で、ノコギリダイを生餌にして、体長70~90センチのアーラニバルを釣り上げることができた。","gloss":"魚の名","glossKey":"さかなのめい","ex":[{"t":"⸢アーラ⸣ニバロー ⸢マイ⸣ズニナーティ ム⸢チイズヌ⸣ イ⸢キムヌ⸣バ ⸢ムン⸣ダニ ⸢シェー⸣ティー ⸢ホー⸣ソーッタン","ipa":"[⸢ʔaːra⸣nibaroː ⸢mai⸣ʣuninaːti mu⸢ʧiʔiʣunu⸣ ʔi⸢kimunu⸣ba ⸢mun⸣dani ⸢ʃeː⸣ti ⸢hoː⸣soːttaŋ]","tr":"マハタの大物は、前曽根でノコギリダイを生餌にして釣り上げられたものだ","a":278}],"domain":"動物"}]},{"id":"HATOMA.117","orth":"アーラバカ","acc":"⸢アーラバカ","ipa":"[⸢ʔaːrabaka]","senses":[{"pos":"名詞","def":"(地)西表島北岸伊武田地区の地名。同地区のウ⸢ブ⸣ミジ[ʔu⸢bu⸣miʣi](大見謝川)の西側の⸢ケーダタバ⸣ル[⸢keːdataba⸣ru](ケーダ田原)とトゥ⸢マダタバル[tu⸢madatabaru](トゥマダ田原)の中間にある水田地帯の名。トゥ⸢マダ田原に属するが、その中の「東の⸣パカ[⸣pḁka](ハカ&lt;区域&gt;)」の義。ニ⸢シムレー[ni⸢ʃimureː](米盛家)、ア⸢マシェー[ʔa⸢maʃeː](小浜家)、イ⸢ラ⸣ブレー[ʔi⸢ra⸣bureː](西原家)、ア⸢ザテー[ʔa⸢ʣateː](東里家)、⸢ヨー⸣カヤー[⸢joːka⸣jaː](西原家)、ク⸢メー[ku⸢meː](小浜家)等の水田が広がっていた","gloss":"西表島北岸伊武田地区の地名","glossKey":"いりおもてしまほくがんいぶたじくのちめい","ex":[],"domain":"地名"}]},{"id":"HATOMA.133","orth":"アーラバカミナトゥ","acc":"⸢アーラバカミナトゥ","ipa":"[⸢ʔaːrabakaminatu]","senses":[{"pos":"名詞","def":"地名。西表島伊武田地区トゥ⸢マダ[tu⸢mada]のアーラバカ(東区画)の小港。アーラバカ一帯の水田の⸢ター⸣ヌ シ⸢ビ[⸢taː⸣nu ʃi⸢bi](田の排水口&lt;田尻&gt;)が小さな港状になった舟の出入り口を形成していて、⸣イダフニ[⸣ʔidaɸuni](サバニ,板舟)をそこから出入りさせて荷物の積み下ろしをしていた。","gloss":"地名","glossKey":"ちめい","ex":[{"t":"ニ⸢シムレーヌ⸣ イダフネー ⸢アーラバカミナトゥナー⸣ル フ⸢バリ⸣ ス⸢コー⸣レータ","ipa":"[ni⸢ʃimureːnu⸣ ʔidaɸuneː ⸢ʔaːrabakaminatunaː⸣ru ɸu⸢bari⸣ su̥⸢koː⸣reːta]","tr":"米盛家のサバニ&lt;板舟&gt;はアーラバカ港にもやって&lt;舫って&gt;おかれた","a":279}]}]},{"id":"HATOMA.139","orth":"アーラマイズニ","acc":"⸢アーラマイズニ","ipa":"[⸢ʔaːramaiʣuni]","senses":[{"pos":"名詞","def":"(海底地名)。「東前曽根」の義。鳩間島の南面約500メートルの海中に発達した珊瑚礁の東側に分れて発達形成された曽根。この曽根は、ナ⸢カヌ⸣スニ[na⸢kanu⸣suni](中の曽根)へと続く。⸣スニ[⸣suni](曽根)とは、大潮の時にも珊瑚礁は海面に現れない所で、海底の珊瑚礁を言う。この曽根とタ⸢カ⸣ビー[tḁ⸢ka⸣biː](高干瀬)の間に約60メートルのフ⸢チ[ɸu̥⸢ʧi](津口)がある","gloss":"","glossKey":"","ex":[],"domain":"海底地名"}]},{"id":"HATOMA.136","orth":"アーランカー","acc":"アーランカー","ipa":"[⸢ʔaːraŋkaː]","senses":[{"pos":"名詞","def":"慌て者。粗忽者。⸢アーリムヌ[⸢ʔaːrimunu](慌て者)ともいう。","gloss":"慌て者","glossKey":"あわてもの","ex":[{"t":"マーン⸢ベー⸣マ ウ⸢ティ⸣シケーティ ア⸢ラキ⸣バ ⸣ミサムヌ ⸣アイニー ⸢アー⸣ランカー⸣ ナリティ ⸢ヌー⸣スワメー","ipa":"[maːʔm⸢beːma⸣ ʔu⸢ti⸣ʃi̥keːti ʔa⸢raki⸣ba misamunu ⸣ʔaini ⸢ʔaːraŋkaː⸣ nariti ⸢nuː⸣suwame]","tr":"もう少し落ち着いてあるけば&lt;行動すれば&gt;よいのに、あんな慌て者になってどうするのかね","a":287}]}]},{"id":"HATOMA.144","orth":"アーリバナ","acc":"⸢アーリバナ","ipa":"[⸢ʔaːribana]","senses":[{"pos":"名詞","def":"上がり始めのころ。「上がり端」の義。","gloss":"上がり始めのころ","glossKey":"あがりはじめのころ","ex":[{"t":"ティ⸢ダ⸣ヌ ⸢アーリバナー⸣ アガーア⸢ガー⸣シ ス⸢マリティ⸣ イッ⸢ケナ カイ⸣ヤン","ipa":"[ti⸢da⸣nu ⸢ʔaːribanaː⸣ ʔagaːʔa⸢gaː⸣ʃi su⸢marititi⸣ ʔik⸢kena kai⸣jaŋ]","tr":"太陽の上がり始めは真っ赤に染まって非常に美しい","a":296}]}]},{"id":"HATOMA.1376","orth":"アーリンーマ","acc":"⸢アーリンーマ","ipa":"[⸢ʔaːrimːma]","senses":[{"pos":"名詞","def":"暴れ馬。気性の荒い馬。鳩間島には馬は育たないという伝承がある。神様が馬に跨って御嶽から御嶽へと回っておられるので、それに遭遇すると馬が暴れて⸢カンアタ⸣ル[⸢kanata⸣ru](神当り、神罰)するという。昔から現在に至るまで鳩間島で馬が飼われたことはないという","gloss":"暴れ馬","glossKey":"あばれうま","ex":[]}]},{"id":"HATOMA.118","orth":"アール","acc":"⸢アール","ipa":"[⸢ʔaːru]","senses":[{"pos":"名詞","def":"(動)蟻。","gloss":"蟻","glossKey":"あり","ex":[{"t":"ア⸢ガアール","ipa":"[ʔa⸢gaʔaːru]","tr":"赤蟻","a":260},{"t":"ッ⸢ふアー⸣ル","ipa":"[f⸢fuʔaː⸣ru]","tr":"(黒蟻))","a":261,"note":"ッ⸢サー⸣ル[s⸢saː⸣ru](白蟻)等がいる"}],"domain":"動物"}]},{"id":"HATOMA.141","orth":"アールカジ","acc":"⸢アールカジ","ipa":"[⸢ʔaːrukadʒi]","senses":[{"pos":"名詞","def":"東風。普通の東風はやわらかに、そよそよと吹く風である。⸢アンカジ[⸢ʔaŋkadʒi](東風)ともいう。","gloss":"東風","glossKey":"ひがしかぜ","ex":[{"t":"⸢アールカジヌ <ア⸢ンカジヌ> フクン","ipa":"[⸢ʔaːrukadʒinu⸣ <⸢ʔaŋkaʤinu> ɸu̥kuŋ]","tr":"東風が吹く","a":292}]}]},{"id":"HATOMA.143","orth":"アールティダ","acc":"⸢アールティダ","ipa":"[⸢ʔaːrutida]","senses":[{"pos":"名詞","def":"上がる太陽。⸢アーリティダ[⸢ʔaːritida](上がる太陽)ともいう。","gloss":"上がる太陽","glossKey":"あがるたいよう","ex":[{"t":"⸢アールティダル⸣ ウ⸢ガ⸣ム","ipa":"[⸢ʔaːrutidaru⸣ ʔu⸢ga⸣mu]","tr":"昇る太陽を拝む。神聖な太陽を拝む。転じて、勢力の大きな者に従う","a":294,"note":"老年層には昇る太陽を神聖なものとして拝む習慣があった。⸢アールティダー⸣ フ⸢チ⸣ル ⸢イールティダー⸣ ドゥク[⸢ʔaːrutidaː⸣ ɸu̥⸢ʧi⸣ru ⸢ʔiːrutidaː⸣ duku](上がる太陽は薬、西日<午後の太陽>は毒)<諺>。"},{"t":"⸢アールティダヌ ペー⸣ルンダ イッ⸢ケナ ヌッ⸣サン","ipa":"[⸢ʔaːrutidanu peː⸣runda ʔi⸢kkena nus⸣saŋ]","tr":"東から上る太陽光線が座敷に差し込むので非常に暖かい","a":295}]}]},{"id":"HATOMA.119","orth":"アールバユミ","acc":"⸢アールバ⸣ ユミ","ipa":"[⸢ʔaːruba⸣ jumi]","senses":[{"pos":"連語","def":"⸢蟻を数えるように」の義。転じて動作ののろい意。","gloss":"⸢蟻を数えるように」の義","glossKey":"⸢ありをかぞえるように」のぎ","ex":[{"t":"⸢アールバ⸣ ユメーティ ア⸢ラカン⸣ドーシ ⸢ダンダン⸣シ ア⸢ラ⸣キパリ⸢ツォー","ipa":"[⸢ʔaːruba⸣ jumeːti ʔa⸢rakan⸣doːʃi ⸢dandaŋ⸣ʃi ʔa⸢ra⸣kipari⸢ʦoː]","tr":"蟻を数えるようにのろのろ歩かないで、さっさと歩いて行きなさいよ&lt;行きなさいってば&gt;","a":262}]}]},{"id":"HATOMA.145","orth":"アールピサ","acc":"⸢アールピサ","ipa":"[⸢ʔaːrupisa]","senses":[{"pos":"名詞","def":"屋根の東側の斜面。「上がり(東)ひら」の義。⸢アンタヌピサ[⸢ʔantanupi̥sa](東のひら)ともいう。","gloss":"屋根の東側の斜面","glossKey":"やねのひがしがわのしゃめん","ex":[{"t":"⸢イールピサ","ipa":"[⸢ʔiːrupi̥sa]","tr":"西のひら","a":297},{"t":"⸢インタヌピサ","ipa":"[⸢ʔintanupi̥sa]","tr":"(西のひら))","a":298},{"t":"⸢マイ⸣ピサ","ipa":"[⸢mai⸣pi̥sa]","tr":"前のひら","a":299},{"t":"⸣マンタヌピサ","ipa":"[⸣mantanupi̥sa]","tr":"(前のひら))","a":300,"note":"ニ⸢シピサ[ni⸢ʃipi̥sa](北のひら)、ニ⸢シンタヌピサ[ni⸢ʃintanupi̥sa](北側のひら)参照"}]}]},{"id":"HATOMA.146","orth":"アールビルティダ","acc":"⸢アールビルティダ","ipa":"[⸢ʔaːrubirutida]","senses":[{"pos":"名詞","def":"東の方にある太陽。午前中の太陽。「東の方に居る太陽」の義。酷暑の夏には午前十一時ごろに仕事を終え、午後は三時以降日没まで野良仕事を続けた。","gloss":"東の方にある太陽","glossKey":"ひがしのほうにあるたいよう","ex":[{"t":"⸢アールビルティダヌ⸣ アルンケンナー パ⸢タ⸣キ ⸢カイ⸣シ クー⸢ディー","ipa":"[⸢ʔaːrubirutidanu⸣ ʔaruŋkennaː pḁ⸢ta⸣ki ⸢kai⸣ʃi kuː⸢diː]","tr":"午前の太陽のあるうちに畑を耕して来ようよ","a":301}]}]},{"id":"HATOMA.147","orth":"アールムティ","acc":"⸢アールムティ","ipa":"[⸢ʔaːrumuti]","senses":[{"pos":"名詞","def":"東の側、東側。⸢アーラムティ[⸢ʔaːramuti](東側)ともいう。⸢イールムティ[⸢ʔiːrumuti](西側)の対義語。","gloss":"東の側、東側","glossKey":"ひがしのがわ、ひがしがわ","ex":[{"t":"ガ⸢バナレーヌ アールムティナー⸣ル ユ⸢チン⸣マー ⸣アル","ipa":"[ga⸢banareːnu ʔaːrumutinaː⸣ru ju⸢ʧim⸣maː ʔaru]","tr":"赤離れの東側にユチン(地名)はある","a":302}]}]},{"id":"HATOMA.148","orth":"アールン","acc":"⸢アー⸣ルン","ipa":"[ʔaː⸣ruŋ]","senses":[{"pos":"自動詞","def":"配分されて全体に行き渡る。","gloss":"配分されて全体に行き渡る","glossKey":"はいぶんされてぜんたいにいきわたる","ex":[{"t":"ムー⸢ルンナー⸣ニ ⸢アー⸣ルンユー ⸢ピーチ⸣ナー ⸢パイ⸣ミリバ","ipa":"[muː⸢runnaː⸣ni ⸢ʔaː⸣ruɲjuː ⸢piːʧi⸣naː ⸢pai⸣miriba]","tr":"皆に行き渡るように配分できるのかどうか、一つずつ配ってごらんよ","a":303},{"t":"ムー⸢ル⸣ネー ⸢アーラサラヌ","ipa":"[muː⸢ru⸣neː ⸢ʔaːrasara⸣nu]","tr":"皆には均等に配分出来ない","a":304},{"t":"ムー⸢ル⸣ニ ⸢アー⸣ル ⸣ブン ⸢ナーン⸣カー ナ⸢ラ⸣ヌ","ipa":"[muː⸢ru⸣ni ⸢ʔaː⸣ru ⸣bun ⸢naːŋ⸣kaː na⸢ra⸣nu]","tr":"全員に均等に配分出来る分ないと困る","a":305}]}]}]</script>
+<script>
+(() => {
+  'use strict';
+  // 音声の取得先。先頭から順に試す。TEIは .wav と書くが、実ファイルは .mp3。
+  //   見出し語: htmvoc_N.mp3（GitHub の midashi/）　例文: htm_N.mp3（GitHub の goi/）
+  const GH = 'https://raw.githubusercontent.com/somiyagawa/NINDA/main/hatoma/';
+  const sources = (kind) => ['audio/', GH + (kind === 'ex' ? 'goi/' : 'midashi/')];   // 先頭は同じフォルダに置いた mp3（あれば優先）
+
+  const DATA = window.HATOMA_DATA || JSON.parse(document.getElementById('hatoma-data').textContent);
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const k2h = (s) => s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  const h2k = (s) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  const nq = (s) => k2h(String(s || '').normalize('NFKC').toLowerCase()).replace(/[\s　⸠⸢⸣\[\]]/g, '');
+  const plain = (h) => String(h || '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  // ッ は辞書の並びでチとツの間に独立して置かれているので、そのまま1つの音として扱う
+  const SMALL = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'ゎ': 'わ', 'ゔ': 'う' };
+  const ROWS = [['ア', 'あいうえお'], ['カ', 'かきくけこ'], ['サ', 'さしすせそ'], ['タ', 'たちっつてと'], ['ナ', 'なにぬねの'],
+                ['ハ', 'はひふへほ'], ['マ', 'まみむめも'], ['ヤ', 'やゆよ'], ['ラ', 'らりるれろ'], ['ワ', 'わゐゑをん'], ['他', '他']];
+  const rowOf = (k) => (ROWS.find((r) => r[1].includes(k)) || ROWS[10])[0];
+  function baseKana(s) {
+    if (!s) return '他';
+    let c = k2h(s[0]).normalize('NFD').replace(/[゙゚]/g, '');
+    c = SMALL[c] || c;
+    return /[ぁ-ん]/.test(c) ? c : '他';
+  }
+  const shortGloss = (g) => (g.length > 28 ? g.slice(0, 28) + '…' : g);
+  const audioName = (e) => (e.na ? '' : e.audio ? e.audio.replace(/\.wav$/i, '.mp3') : `htmvoc_${e.num}.mp3`);
+
+  /* ---- index ---- */
+  const seen = new Map();
+  DATA.forEach((e, i) => {
+    e.i = i;
+    const n = seen.get(e.id) || 0; seen.set(e.id, n + 1);
+    e.key = n ? `${e.id}_${n + 1}` : e.id;           // 同じ xml:id が2つある見出し用に、表示用の一意なキーを作る
+    e.num = e.id.split('.')[1];
+    e.k = nq(e.orth);
+    e.ik = nq(e.ipa).replace(/ʔ/g, '');
+    e.kb = baseKana(e.k);
+    e.senses.forEach((s, j) => {
+      s.defText = plain(s.def);
+      s.gk = nq(s.gloss);
+      s.glk = nq(s.glossKey);
+      s.dk = nq(s.defText);
+      s.xk = nq(s.ex.map((x) => plain(x.tr)).join(' '));
+      s.kb = baseKana(s.glk || s.gk);
+      s.j = j;
+    });
+    e.glosses = [...new Set(e.senses.map((s) => shortGloss(s.gloss)).filter(Boolean))];
+    e.poss = [...new Set(e.senses.map((s) => s.pos).filter(Boolean))];
+    e.doms = [...new Set(e.senses.map((s) => s.domain).filter(Boolean))];
+  });
+  const byKey = new Map(DATA.map((e) => [e.key, e]));
+  const countBy = (fn) => {
+    const m = new Map();
+    DATA.forEach((e) => fn(e).forEach((v) => m.set(v, (m.get(v) || 0) + 1)));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  };
+  const POS_LIST = countBy((e) => e.poss);
+  const DOM_LIST = countBy((e) => e.doms);
+  $('#sub').textContent = DATA.length < 1000 ? `試作版（最初の${DATA.length}見出し）` : `全${DATA.length.toLocaleString('ja-JP')}見出し`;
+
+  /* ---- state ---- */
+  const st = { mode: 'all', q: '', row: null, kana: null, pos: null, dom: null, sel: null, order: [] };
+  let audio = null;
+  let view = { rows: [], pos: 0, last: null };
+  const FIRST = 120, CHUNK = 200;
+
+  /* ---- search ---- */
+  const rank = (hay, q) => (!hay ? -1 : hay === q ? 0 : hay.startsWith(q) ? 1 : hay.includes(q) ? 2 : -1);
+  function diaScore(e, q) {
+    const a = rank(e.k, q);
+    const b = rank(e.ik, q.replace(/ʔ/g, ''));
+    const sa = a < 0 ? 99 : a === 2 ? 3 : a;
+    const sb = b < 0 ? 99 : b === 2 ? 4 : 2;
+    const m = Math.min(sa, sb);
+    return m === 99 ? -1 : m;
+  }
+  function stdScore(s, q) {
+    const g = [rank(s.gk, q), rank(s.glk, q)].filter((v) => v >= 0);
+    if (g.length) return 5 + Math.min(...g);
+    if (s.dk.includes(q)) return 8;
+    if (s.xk.includes(q)) return 9;
+    return -1;
+  }
+  const whyOf = (sc) => (sc < 5 ? '方言' : sc <= 7 ? '標準語' : sc === 8 ? '語釈' : '例文');
+  const passEntry = (e) => (!st.pos || e.poss.includes(st.pos)) && (!st.dom || e.doms.includes(st.dom));
+  const passSense = (s) => (!st.pos || s.pos === st.pos) && (!st.dom || s.domain === st.dom);
+
+  function build() {
+    const q = nq(st.q), rows = [];
+    for (const e of DATA) {
+      if (st.mode === 'std') {
+        for (const s of e.senses) {
+          if (!s.gloss || !passSense(s)) continue;
+          let sc = 0;
+          if (q) { sc = stdScore(s, q); if (sc < 0) continue; }
+          rows.push({ e, s, sc, why: q ? whyOf(sc) : null, kb: s.kb, key: s.glk });
+        }
+      } else {
+        if (!passEntry(e)) continue;
+        let sc = 0, why = null, s = null;
+        if (q) {
+          const d = diaScore(e, q);
+          let best = -1, bs = null;
+          if (st.mode === 'all') for (const x of e.senses) { const v = stdScore(x, q); if (v >= 0 && (best < 0 || v < best)) { best = v; bs = x; } }
+          if (st.mode === 'dia') { if (d < 0) continue; sc = d; }
+          else {
+            if (d < 0 && best < 0) continue;
+            if (d >= 0 && (best < 0 || d <= best)) sc = d; else { sc = best; s = bs; }
+          }
+          why = whyOf(sc);
+        }
+        rows.push({ e, s, sc, why, kb: e.kb });
+      }
+    }
+    if (q) rows.sort((a, b) => a.sc - b.sc || a.e.i - b.e.i);
+    else if (st.mode === 'std') rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : a.e.i - b.e.i));
+    return rows;
+  }
+
+  /* ---- render: list ---- */
+  const lbl = (k) => (k === '他' ? '他' : st.mode === 'std' ? k : h2k(k));
+  const playSvg = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></svg>';
+  const playBtn = (e, cls = '') => `<button class="play ${cls}" type="button" data-play="${e.i}" aria-label="${esc(e.orth)}を再生">${playSvg}</button>`;
+
+  function rowHtml(r) {
+    const { e, s } = r;
+    const pos = (s ? [s.pos] : e.poss).filter(Boolean).slice(0, 2);
+    const gloss = st.mode === 'std' ? shortGloss(s.gloss) : (s && r.why && r.why !== '方言' ? shortGloss(s.gloss) : e.glosses.join('／'));
+    const tags = pos.map((p) => `<span class="tag">${esc(p)}</span>`).join('') + (r.why ? `<span class="tag why">${esc(r.why)}で一致</span>` : '');
+    return `<li class="row${st.sel === e.key ? ' sel' : ''}" data-id="${esc(e.key)}">
+      ${playBtn(e)}
+      <button class="rowmain" type="button" data-open="${esc(e.key)}"><span class="w">${esc(e.orth)}<span class="ipa">${esc(e.ipa)}</span></span><span class="g">${esc(gloss)}</span></button>
+      <div class="tags">${tags}</div></li>`;
+  }
+
+  // 一覧は先頭から少しずつ表示し、スクロールに合わせて足していく（全件を一度に作らない）
+  function more(n) {
+    if (view.pos >= view.rows.length) return;
+    const end = Math.min(view.rows.length, view.pos + n);
+    let html = '';
+    for (let i = view.pos; i < end; i++) {
+      const r = view.rows[i];
+      if (!st.q && r.kb !== view.last) { view.last = r.kb; html += `<li class="gh" aria-hidden="true">${lbl(r.kb)}</li>`; }
+      html += rowHtml(r);
+    }
+    view.pos = end;
+    $('#list').insertAdjacentHTML('beforeend', html);
+    $('#more').hidden = view.pos >= view.rows.length;
+    $('#more-btn').textContent = `さらに表示（残り${(view.rows.length - view.pos).toLocaleString('ja-JP')}件）`;
+  }
+  function ensureRendered(key) {
+    const i = view.rows.findIndex((r) => r.e.key === key);
+    if (i >= view.pos) more(i - view.pos + CHUNK);
+  }
+  function onScroll() {
+    if (view.pos >= view.rows.length) return;
+    if ($('#more').getBoundingClientRect().top < innerHeight + 1200) more(CHUNK);
+  }
+
+  function render() {
+    const all = build();
+    const kc = new Map();
+    all.forEach((r) => kc.set(r.kb, (kc.get(r.kb) || 0) + 1));
+    const rowCount = (name) => ROWS.find((x) => x[0] === name)[1].split('').reduce((n, k) => n + (kc.get(k) || 0), 0);
+    let rows = all;
+    if (st.row) rows = rows.filter((r) => rowOf(r.kb) === st.row);
+    if (st.kana) rows = rows.filter((r) => r.kb === st.kana);
+
+    $('#kana-label').textContent = st.mode === 'std' ? '標準語の頭の音' : '方言の頭の音';
+    $('#rows-tiles').innerHTML = ROWS.filter((r) => r[0] !== '他' || kc.get('他'))
+      .map(([name, ks]) => {
+        const n = rowCount(name);
+        return `<button class="tile" type="button" data-row="${name}" aria-pressed="${st.row === name}" ${n ? '' : 'disabled'}><b>${lbl(name === '他' ? '他' : ks[0])}</b><small>${n.toLocaleString('ja-JP')}</small></button>`;
+      }).join('');
+    $('#kana-tiles').innerHTML = st.row && st.row !== '他'
+      ? ROWS.find((x) => x[0] === st.row)[1].split('').map((k) => `<button class="tile" type="button" data-kana="${k}" aria-pressed="${st.kana === k}" ${kc.get(k) ? '' : 'disabled'}><b>${lbl(k)}</b><small>${(kc.get(k) || 0).toLocaleString('ja-JP')}</small></button>`).join('')
+      : '';
+    $('#pos-chips').innerHTML = POS_LIST.map(([p, n]) => `<button class="chip-btn" type="button" data-pos="${esc(p)}" aria-pressed="${st.pos === p}">${esc(p)}<i>${n.toLocaleString('ja-JP')}</i></button>`).join('');
+    $('#dom-chips').innerHTML = DOM_LIST.map(([p, n]) => `<button class="chip-btn" type="button" data-dom="${esc(p)}" aria-pressed="${st.dom === p}">${esc(p)}<i>${n.toLocaleString('ja-JP')}</i></button>`).join('');
+    $('#dom-wrap').hidden = !DOM_LIST.length;
+
+    const unit = st.mode === 'std' ? '件' : '語';
+    const filtered = !!(st.row || st.kana || st.pos || st.dom);
+    $('#count').innerHTML = `<strong>${rows.length.toLocaleString('ja-JP')}</strong> ${unit}${st.q ? `（「${esc(st.q)}」）` : `（全${DATA.length.toLocaleString('ja-JP')}見出し中）`}`;
+    $('#reset').hidden = !filtered;
+
+    view = { rows, pos: 0, last: null };
+    $('#list').innerHTML = '';
+    if (!rows.length) {
+      $('#list').innerHTML = `<li class="empty"><b>一致する語がありません</b>かな表記を変えるか、絞り込みを解除してください。標準語で探すときは「すべて」か「標準語から」を選びます。</li>`;
+      $('#more').hidden = true;
+    } else {
+      more(FIRST);
+    }
+    const seenK = new Set();
+    st.order = rows.map((r) => r.e.key).filter((k) => (seenK.has(k) ? false : (seenK.add(k), true)));
+  }
+
+  /* ---- render: detail ---- */
+  function exHtml(x) {
+    const btn = x.a ? `<button class="play sm" type="button" data-ex="htm_${x.a}.mp3" aria-label="例文を再生">${playSvg}</button>` : '';
+    return `<li class="${x.a ? 'has-aud' : ''}">${btn}<div class="ex-body"><p class="q">${x.song ? '<span class="song">歌</span>' : ''}${esc(x.t)}</p>${x.ipa ? `<p class="ipa">${esc(x.ipa)}</p>` : ''}${x.tr ? `<p class="tr">${x.tr}</p>` : ''}${x.note ? `<p class="note">${esc(x.note)}</p>` : ''}</div></li>`;
+  }
+  const circled = (n) => '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[n - 1] || String(n);
+  function renderDetail(e) {
+    const multi = e.senses.length > 1;
+    const senses = e.senses.map((s, j) => {
+      const first = s.ex.slice(0, 3), rest = s.ex.slice(3);
+      return `<section class="sense">
+        <div class="s-head">${multi ? `<span class="s-no">${circled(j + 1)}</span>` : ''}${s.pos ? `<span class="chip">${esc(s.pos)}</span>` : ''}${s.domain ? `<span class="chip dom">${esc(s.domain)}</span>` : ''}${s.sub ? `<span class="chip hom">同形の別項目 ${esc(s.sub)}</span>` : ''}</div>
+        <p class="def"><span class="lab">共通語</span>${s.def}</p>
+        ${first.length ? `<ol class="ex">${first.map(exHtml).join('')}</ol>` : ''}
+        ${rest.length ? `<details class="more"><summary>例文をさらに表示（${rest.length}）</summary><ol class="ex">${rest.map(exHtml).join('')}</ol></details>` : ''}
+        ${(s.notes || []).map((n) => `<p class="note">${esc(n)}</p>`).join('')}
+      </section>`;
+    }).join('');
+    $('#detail').innerHTML = `<article class="d">
+      <div class="d-nav">
+        <button class="back" type="button" id="back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>一覧へ</button>
+        <div class="pn"><button class="icon-btn" type="button" id="prev" aria-label="前の語"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><button class="icon-btn" type="button" id="next" aria-label="次の語"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></div>
+      </div>
+      <h2 class="d-orth">${esc(e.orth)}</h2>
+      <div class="d-pron"><span class="acc" title="アクセント表記">${esc(e.acc)}</span><span class="ipa" title="IPA">${esc(e.ipa)}</span></div>
+      <div class="d-audio">${e.na ? '<span class="file">この語の音声はありません</span>' : `${playBtn(e, 'big')}<button class="pill-btn" type="button" data-play="${e.i}" data-slow="1">ゆっくり</button><span class="file">${esc(audioName(e))}</span>`}</div>
+      ${senses}
+      <div class="d-meta">項目ID <code>${esc(e.id)}</code>${e.senses.some((s) => s.sub) ? '<br>この見出しには、同じ形の別項目（同形語）の語義も含まれています。' : ''}</div>
+    </article>`;
+    $('#detail').scrollTop = 0;
+  }
+
+  /* ---- selection ---- */
+  const narrow = () => matchMedia('(max-width: 899px)').matches;
+  function select(key, opts = {}) {
+    const e = byKey.get(key);
+    if (!e) return;
+    st.sel = key;
+    renderDetail(e);
+    if (opts.reveal) ensureRendered(key);
+    document.querySelectorAll('.row.sel').forEach((n) => n.classList.remove('sel'));
+    const li = document.querySelector(`.row[data-id="${CSS.escape(key)}"]`);
+    if (li) { li.classList.add('sel'); if (opts.reveal && !narrow()) li.scrollIntoView({ block: 'center' }); }
+    if (opts.open && narrow()) $('#detail').classList.add('open');
+    try { history.replaceState(null, '', '#' + key); } catch (_) { /* sandboxed */ }
+  }
+  const step = (d) => {
+    const list = st.order.length ? st.order : DATA.map((e) => e.key);
+    const i = list.indexOf(st.sel);
+    select(list[(i + d + list.length) % list.length], { reveal: true });
+  };
+
+  /* ---- audio ---- */
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500);
+  }
+  let playToken = 0;
+  function playFile(name, kind, slow, btn) {
+    if (!name) { toast('この語には音声が登録されていません。'); return; }
+    if (audio) audio.pause();
+    document.querySelectorAll('.play.is-playing').forEach((b) => b.classList.remove('is-playing'));
+    const token = ++playToken, list = sources(kind);
+    if (btn) btn.classList.add('is-playing');
+    const stop = () => { if (btn) btn.classList.remove('is-playing'); };
+    const attempt = (k) => {
+      if (token !== playToken) return;
+      if (k >= list.length) { stop(); toast(`音声 ${name} を読み込めませんでした。ネットワーク接続か、audio フォルダの中身を確かめてください。`); return; }
+      const a = new Audio(list[k] + name);
+      a.playbackRate = slow ? 0.7 : 1;
+      if ('preservesPitch' in a) a.preservesPitch = true;
+      audio = a;
+      a.addEventListener('ended', () => { if (token === playToken) stop(); });
+      a.addEventListener('error', () => attempt(k + 1));
+      a.play().catch(() => { /* 読み込み失敗は error イベントで次の取得先へ */ });
+    };
+    attempt(0);
+  }
+  const play = (i, slow, btn) => { const e = DATA[i]; playFile(e ? audioName(e) : '', 'hw', slow, btn); };
+
+  /* ---- events ---- */
+  const q = $('#q');
+  let inputTimer;
+  q.addEventListener('input', () => {
+    st.q = q.value; $('#clear').hidden = !q.value;
+    clearTimeout(inputTimer);
+    inputTimer = setTimeout(render, DATA.length > 2000 ? 120 : 0);
+  });
+  $('#clear').addEventListener('click', () => { q.value = ''; st.q = ''; $('#clear').hidden = true; render(); q.focus(); });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === '/' && document.activeElement !== q && !/input|textarea/i.test(document.activeElement.tagName)) { ev.preventDefault(); q.focus(); }
+    if (ev.key === 'Escape') { if ($('#detail').classList.contains('open')) $('#detail').classList.remove('open'); else if (q.value) $('#clear').click(); }
+  });
+  document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+    st.mode = b.dataset.mode; st.row = st.kana = null;
+    $('#app').dataset.mode = st.mode;
+    document.querySelectorAll('.modes button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    render();
+  }));
+  $('#reset').addEventListener('click', () => { st.row = st.kana = st.pos = st.dom = null; render(); });
+  $('#random').addEventListener('click', () => { const e = DATA[Math.floor(Math.random() * DATA.length)]; select(e.key, { open: true, reveal: true }); });
+  $('#more-btn').addEventListener('click', () => more(CHUNK * 2));
+  $('#listcol').addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  $('#browse').addEventListener('click', (ev) => {
+    const t = ev.target.closest('button'); if (!t) return;
+    if (t.dataset.row) { st.row = st.row === t.dataset.row ? null : t.dataset.row; st.kana = null; }
+    else if (t.dataset.kana) { st.kana = st.kana === t.dataset.kana ? null : t.dataset.kana; }
+    else if (t.dataset.pos) { st.pos = st.pos === t.dataset.pos ? null : t.dataset.pos; }
+    else if (t.dataset.dom) { st.dom = st.dom === t.dataset.dom ? null : t.dataset.dom; }
+    else return;
+    render();
+  });
+  $('#list').addEventListener('click', (ev) => {
+    const p = ev.target.closest('[data-play]');
+    if (p) { play(+p.dataset.play, false, p); return; }
+    const o = ev.target.closest('[data-open]');
+    if (o) select(o.dataset.open, { open: true });
+  });
+  $('#detail').addEventListener('click', (ev) => {
+    const x = ev.target.closest('[data-ex]');
+    if (x) { playFile(x.dataset.ex, 'ex', false, x); return; }
+    const p = ev.target.closest('[data-play]');
+    if (p) { play(+p.dataset.play, !!p.dataset.slow, p.classList.contains('play') ? p : null); return; }
+    if (ev.target.closest('#back')) $('#detail').classList.remove('open');
+    if (ev.target.closest('#prev')) step(-1);
+    if (ev.target.closest('#next')) step(1);
+  });
+  window.addEventListener('hashchange', () => { const k = decodeURIComponent(location.hash.slice(1)); if (byKey.has(k) && k !== st.sel) select(k, { open: true, reveal: true }); });
+
+  /* theme toggle: auto -> light -> dark */
+  const themes = ['auto', 'light', 'dark'];
+  let ti = 0;
+  try { const v = localStorage.getItem('hatoma-theme'); if (themes.includes(v)) ti = themes.indexOf(v); } catch (_) {}
+  const applyTheme = () => { const t = themes[ti]; if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); };
+  applyTheme();
+  $('#theme').addEventListener('click', () => {
+    ti = (ti + 1) % 3; applyTheme();
+    try { localStorage.setItem('hatoma-theme', themes[ti]); } catch (_) {}
+    toast({ auto: '表示: 端末の設定に合わせる', light: '表示: 明るい', dark: '表示: 暗い' }[themes[ti]]);
+  });
+
+  /* ---- boot ---- */
+  if (!narrow()) $('#browse').open = true;
+  render();
+  const startKey = decodeURIComponent(location.hash.slice(1));
+  select(byKey.has(startKey) ? startKey : 'HATOMA.2', { open: false, reveal: byKey.has(startKey) });
+})();
+</script>

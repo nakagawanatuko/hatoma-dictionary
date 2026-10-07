@@ -1,0 +1,9 @@
+.DS_Store
+__pycache__/
+site/screenshots/
+
+# 元データ（非公開）
+source/hatoma.tei
+source/Hatoma_example_20220921.txt
+source/hatoma_reverse_dict.tsv
+source/hatoma_reverse_index_full_hiragana.tsv
