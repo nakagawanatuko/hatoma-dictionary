@@ -124,4 +124,4 @@ TEI Lex-0版 鳩間方言辞典（国立国語研究所、編集: 王一凡・�
 音声（見出し語）: [doi:10.5281/zenodo.4560935](https://doi.org/10.5281/zenodo.4560935)
 音声（例文）: [doi:10.5281/zenodo.7100944](https://doi.org/10.5281/zenodo.7100944)
 配信元: NINDAのGitHub `somiyagawa/NINDA`。
-ライセンス: 辞書データは [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)、見出し語の音声はCC BY-SA、例文の音声はCC BY（版は未確認）。
+ライセンス: 辞書データは [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)、見出し語の音声はCC BY-SA、例文の音声はCC BY。

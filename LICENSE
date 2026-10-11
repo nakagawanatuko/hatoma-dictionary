@@ -13,8 +13,5 @@
   Doulos SIL 7.000 / Charis SIL 7.000（SIL Global、SIL Open Font License 1.1。全文は docs/fonts/OFL-*.txt）
   https://software.sil.org/doulos/ ・ https://software.sil.org/charis/
 
-■ スクリプト・画面（scripts/、site/、docs/index.html）
+■ スクリプト・htmlのテンプレート（scripts/、site/、docs/index.html）
   CC0
-
-※ GitHub に CC BY-SA 4.0 の全文を載せるときは、リポジトリの「Add file」→「Create new file」で
-  ファイル名に LICENSE と入力し、右に出る「Choose a license template」から選べます。
