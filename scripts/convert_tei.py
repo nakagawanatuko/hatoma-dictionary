@@ -39,6 +39,57 @@ def def_html(d):
         else: out+=esc(txt(c))
         out+=esc(c.tail or '')
     return norm(out)
+PERF=re.compile(r'\{Performer\}(.*?)\{/Performer\}')
+def fix(s): return PERF.sub(lambda m:'〔%s〕'%m.group(1),s)
+def html_of(e, skip=()):
+    """子要素のうち skip に挙げたものを除いて、ルビ付きのHTMLにする。"""
+    out=esc(e.text or '')
+    for c in e:
+        ln=etree.QName(c).localname
+        if ln in skip: pass
+        elif ln=='ruby':
+            rb=c.find(T+'rb'); rt=c.find(T+'rt')
+            out+='<ruby>%s<rt>%s</rt></ruby>'%(esc(txt(rb)),esc(txt(rt)))
+        else: out+=esc(txt(c))
+        out+=esc(c.tail or '')
+    return norm(fix(out))
+def song_of(q):
+    """<quote type="song"> を、{lines:[{t,tr,who}], title, bibl} にする。"""
+    lines=[]; title=bibl=None
+    for c in q:
+        ln=etree.QName(c).localname
+        if ln=='p':
+            tr=c.find(T+'cit/'+T+'quote'); who=c.find(T+'note')
+            line={'t':html_of(c,skip=('cit','note'))}
+            if tr is not None: line['tr']=clean_tr(def_html(tr))
+            if who is not None: line['who']=txt(who)
+            lines.append(line)
+        elif ln=='title': title=txt(c)
+        elif ln=='bibl': bibl=txt(c)
+    s={'lines':lines}
+    if title: s['title']=title
+    if bibl: s['bibl']=bibl
+    return s
+def has_song(e):
+    return any(etree.QName(c).localname=='quote' and c.get('type')=='song' for c in e)
+def blocks(node):
+    """本文を、文章 {t} と歌 {song} の並びにする（歌の前後の文章を順に保つ）。"""
+    out=[]; cur=esc(node.text or '')
+    def flush():
+        nonlocal cur
+        s=norm(fix(cur))
+        if s: out.append({'t':s})
+        cur=''
+    for c in node:
+        ln=etree.QName(c).localname
+        if ln=='quote' and c.get('type')=='song':
+            flush(); out.append({'song':song_of(c)})
+        elif ln=='ruby':
+            rb=c.find(T+'rb'); rt=c.find(T+'rt')
+            cur+='<ruby>%s<rt>%s</rt></ruby>'%(esc(txt(rb)),esc(txt(rt)))
+        else: cur+=esc(txt(c))
+        cur+=esc(c.tail or '')
+    flush(); return out
 def balanced(s):
     return s.count('(')==s.count(')') and s.count('（')==s.count('）')
 def clean_tr(s):
@@ -61,9 +112,15 @@ def parse_senses(e, sub_id, inherit_pos, out):
         pos=norm(''.join(g.itertext())) if g is not None else inherit_pos
         u=s.find(T+'usg')
         dom=txt(u) if u is not None else None
-        d=s.find(T+'def')
-        dh=def_html(d) if d is not None else ''
-        plain=txt(d) if d is not None else ''
+        d=s.find(T+'def'); dx=[]
+        if d is not None and has_song(d):
+            bl=blocks(d)
+            dh=bl[0]['t'] if bl and 't' in bl[0] else ''
+            dx=bl[1:] if dh else bl
+            plain=html_plain(dh)
+        else:
+            dh=def_html(d) if d is not None else ''
+            plain=txt(d) if d is not None else ''
         plain=re.sub(r'\s+','',plain) if False else plain
         ex=[]; notes=[]
         for c in s.findall(T+'cit'):
@@ -75,7 +132,7 @@ def parse_senses(e, sub_id, inherit_pos, out):
                        'song':q.get('type')=='song','note':txt(note) if note is not None else ''})
         for n in s.findall(T+'note'): notes.append(txt(n))
         out.append({'sub':sub_id,'pos':POS.get(pos,pos),'posRaw':pos,'domain':DOM.get(dom,dom) if dom else None,
-                    'def':dh,'gloss':gloss_of(plain),'ex':ex,'notes':notes})
+                    'def':dh,'dx':dx,'gloss':gloss_of(plain),'ex':ex,'notes':notes})
 def convert_entry(e):
     f=e.find(T+'form[@type="lemma"]')
     orth=txt(f.find(T+'orth'))
@@ -88,10 +145,12 @@ def convert_entry(e):
     base_pos=entry_pos(e)
     senses=[]
     parse_senses(e,None,base_pos,senses)
+    notes=[blocks(n) for n in e.findall(T+'note')]
     for h in e.findall(T+'entry'):
         parse_senses(h,h.get(XID),entry_pos(h) or base_pos,senses)
+        notes+=[blocks(n) for n in h.findall(T+'note')]
     # etc: collect unknown children for survey
-    return {'id':e.get(XID),'orth':orth,'acc':acc,'ipa':ipa,'audio':audio,'senses':senses}
+    return {'id':e.get(XID),'orth':orth,'acc':acc,'ipa':ipa,'audio':audio,'senses':senses,'notes':notes}
 
 def attach_example_audio(entries, txt_path):
     """TEIの例文に、例文音声（htm_<SID>.mp3）を対応づける。
@@ -138,12 +197,14 @@ def slim(entries):
         a = e['audio']
         if not a or not re.fullmatch(r'htmvoc_\d+\.wav', a): o['na'] = 1          # 音声なし（'#' など）
         elif a != 'htmvoc_%s.wav' % num: o['audio'] = a                          # 番号が見出しIDと違うときだけ保存
+        if e.get('notes'): o['notes'] = e['notes']
         o['senses'] = []
         for s in e['senses']:
             so = {'pos': s['pos'] or '', 'def': s['def'], 'gloss': s['gloss'], 'glossKey': s['glossKey'], 'ex': []}
             if s['domain']: so['domain'] = s['domain']
             if s['sub']: so['sub'] = s['sub']
             if s['notes']: so['notes'] = s['notes']
+            if s.get('dx'): so['dx'] = s['dx']
             for x in s['ex']:
                 xo = {'t': x['t']}
                 for k in ('ipa', 'tr', 'a', 'note'):

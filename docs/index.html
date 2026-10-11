@@ -178,6 +178,21 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pill-btn { border: 1.5px solid var(--dia); color: var(--dia); background: transparent; border-radius: 999px; padding: 8px 18px; font: 700 14px var(--f-display); }
 .pill-btn:hover { background: var(--dia-soft); }
 .file { font: 400 12.5px var(--f-ipa); color: var(--muted); }
+.lyr { margin: 12px 0 14px; padding: 10px 14px 12px; background: var(--surface-2); border-left: 4px solid var(--dia); border-radius: 0 10px 10px 0; }
+.lyr-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font: 700 14px var(--f-display); color: var(--dia); }
+.lyr-tag { font: 700 11.5px var(--f-display); color: var(--on-dia); background: var(--dia); border-radius: 6px; padding: 0 7px; }
+.lyr ol { list-style: none; margin: 0; padding: 0; }
+.lyr li { padding: 5px 0; border-top: 1px dashed var(--line); }
+.lyr li:first-child { border-top: 0; }
+.lyr .lt { margin: 0; font-size: 16px; line-height: 1.7; }
+.lyr .ltr { margin: 1px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--std); }
+.lyr .who { font: 600 11.5px var(--f-display); color: var(--muted); margin-left: 8px; }
+.lyr .bibl { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+.dx { margin: 8px 0; line-height: 1.8; }
+.enotes { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+.enotes h3 { margin: 0 0 8px; font: 700 15px var(--f-display); color: var(--muted); }
+.enote { margin: 0 0 10px; }
+.enote > p { margin: 6px 0; line-height: 1.8; }
 .sense { border-top: 1px solid var(--line); padding: 18px 0 6px; margin-top: 14px; }
 .s-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
 .s-no { font: 900 15px var(--f-display); color: var(--dia); margin-right: 2px; }
@@ -297,7 +312,7 @@ details.more .ex { margin-top: 14px; }
       <div class="listbox"><ul class="list" id="list"><li class="empty">読み込み中です…</li></ul></div>
       <div class="more-bar" id="more" hidden><button class="pill-btn" id="more-btn" type="button">さらに表示</button></div>
       <p class="credit">
-        出典: TEI Lex-0版 鳩間方言辞典（国立国語研究所、編集: 王一凡・中川奈津子、2026年4月28日版）。元データ：加治工真市著『鳩間方言辞典』。
+        出典: TEI Lex-0版 鳩間方言辞典（国立国語研究所、編集: 王一凡・中川奈津子、2026年4月28日版）。
         <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>。
         音声: 見出し語 <a href="https://doi.org/10.5281/zenodo.4560935" target="_blank" rel="noopener">doi:10.5281/zenodo.4560935</a>（CC BY-SA）、例文 <a href="https://doi.org/10.5281/zenodo.7100944" target="_blank" rel="noopener">doi:10.5281/zenodo.7100944</a>（CC BY）。
         標準語の見出しは語釈の最初の一文から自動で取り出したもので、編集した見出し語ではありません。
@@ -530,6 +545,8 @@ details.more .ex { margin-top: 14px; }
     const btn = x.a ? `<button class="play sm" type="button" data-ex="htm_${x.a}.mp3" aria-label="例文を再生">${playSvg}</button>` : '';
     return `<li class="${x.a ? 'has-aud' : ''}">${btn}<div class="ex-body"><p class="q">${x.song ? '<span class="song">歌</span>' : ''}${esc(x.t)}</p>${x.ipa ? `<p class="ipa">${esc(x.ipa)}</p>` : ''}${x.tr ? `<p class="tr">${x.tr}</p>` : ''}${x.note ? `<p class="note">${esc(x.note)}</p>` : ''}</div></li>`;
   }
+  const lyrHtml = (s) => `<figure class="lyr" style="margin-left:0;margin-right:0"><div class="lyr-head"><span class="lyr-tag">歌</span>${s.title ? esc(s.title) : ''}</div><ol>${s.lines.map((l) => `<li><p class="lt">${l.t}${l.who ? `<span class="who">${esc(l.who)}</span>` : ''}</p>${l.tr ? `<p class="ltr">${l.tr}</p>` : ''}</li>`).join('')}</ol>${s.bibl ? `<p class="bibl">${esc(s.bibl)}</p>` : ''}</figure>`;
+  const blockHtml = (b) => (b.song ? lyrHtml(b.song) : `<p class="dx">${b.t}</p>`);
   const circled = (n) => '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[n - 1] || String(n);
   function renderDetail(e) {
     const multi = e.senses.length > 1;
@@ -538,6 +555,7 @@ details.more .ex { margin-top: 14px; }
       return `<section class="sense">
         <div class="s-head">${multi ? `<span class="s-no">${circled(j + 1)}</span>` : ''}${s.pos ? `<span class="chip">${esc(s.pos)}</span>` : ''}${s.domain ? `<span class="chip dom">${esc(s.domain)}</span>` : ''}${s.sub ? `<span class="chip hom">同形の別項目 ${esc(s.sub)}</span>` : ''}</div>
         <p class="def"><span class="lab">共通語</span>${s.def}</p>
+        ${(s.dx || []).map(blockHtml).join('')}
         ${first.length ? `<ol class="ex">${first.map(exHtml).join('')}</ol>` : ''}
         ${rest.length ? `<details class="more"><summary>例文をさらに表示（${rest.length}）</summary><ol class="ex">${rest.map(exHtml).join('')}</ol></details>` : ''}
         ${(s.notes || []).map((n) => `<p class="note">${esc(n)}</p>`).join('')}
@@ -552,6 +570,7 @@ details.more .ex { margin-top: 14px; }
       <div class="d-pron"><span class="acc" title="アクセント表記">${esc(e.acc)}</span><span class="ipa" title="IPA">${esc(e.ipa)}</span></div>
       <div class="d-audio">${e.na ? '<span class="file">この語の音声はありません</span>' : `${playBtn(e, 'big')}<button class="pill-btn" type="button" data-play="${e.i}" data-slow="1">ゆっくり</button><span class="file">${esc(audioName(e))}</span>`}</div>
       ${senses}
+      ${(e.notes && e.notes.length) ? `<section class="enotes"><h3>注記</h3>${e.notes.map((n) => `<div class="enote">${n.map(blockHtml).join('')}</div>`).join('')}</section>` : ''}
       <div class="d-meta">項目ID <code>${esc(e.id)}</code>${e.senses.some((s) => s.sub) ? '<br>この見出しには、同じ形の別項目（同形語）の語義も含まれています。' : ''}</div>
     </article>`;
     $('#detail').scrollTop = 0;
