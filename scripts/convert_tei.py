@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from example_norm import norm_ex, ntr, html_plain
+from related import add_related
 import re, json
 from lxml import etree
 import pykakasi
@@ -237,6 +238,8 @@ def main():
             g=s['gloss']
             s['glossKey']=hira(re.sub(r'[(（].*?[)）]','',g)) if g else ''
     entries=slim(entries)
+    nrel,found,miss=add_related(entries)
+    print('関連語:',nrel,'見出しに付与（対義 a / 同義 s / 参照 r / 別の言い方 o）',dict(found),'、見出しに対応しない',dict(miss))
     Path(a.out).parent.mkdir(parents=True,exist_ok=True)
     json.dump(entries,open(a.out,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     print(len(entries),'見出し /',sum(len(e['senses']) for e in entries),'語義 /',sum(len(s['ex']) for e in entries for s in e['senses']),'例文 ->',a.out)

@@ -193,6 +193,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .enotes h3 { margin: 0 0 8px; font: 700 15px var(--f-display); color: var(--muted); }
 .enote { margin: 0 0 10px; }
 .enote > p { margin: 6px 0; line-height: 1.8; }
+.related { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
+.related > h3 { margin: 0 0 10px; font: 700 15px var(--f-display); color: var(--muted); }
+.rel-g { margin: 0 0 14px; }
+.rel-g h4 { margin: 0 0 6px; font: 600 13px var(--f-display); color: var(--muted); }
+.rel-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rel-chip { display: inline-flex; align-items: baseline; gap: 8px; max-width: 100%; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.rel-chip:hover { border-color: var(--dia); background: var(--surface-2); }
+.rel-chip b { font: 700 15px var(--f-display); color: var(--dia); white-space: nowrap; }
+.rel-chip small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rel-chips:not(.open) .rel-extra { display: none; }
+.rel-more { padding: 6px 12px; border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--dia); font: 600 13px var(--f-display); cursor: pointer; }
+.rel-more:hover { border-color: var(--dia); background: var(--surface-2); }
 .sense { border-top: 1px solid var(--line); padding: 18px 0 6px; margin-top: 14px; }
 .s-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
 .s-no { font: 900 15px var(--f-display); color: var(--dia); margin-right: 2px; }
@@ -547,6 +559,49 @@ details.more .ex { margin-top: 14px; }
   }
   const lyrHtml = (s) => `<figure class="lyr" style="margin-left:0;margin-right:0"><div class="lyr-head"><span class="lyr-tag">歌</span>${s.title ? esc(s.title) : ''}</div><ol>${s.lines.map((l) => `<li><p class="lt">${l.t}${l.who ? `<span class="who">${esc(l.who)}</span>` : ''}</p>${l.tr ? `<p class="ltr">${l.tr}</p>` : ''}</li>`).join('')}</ol>${s.bibl ? `<p class="bibl">${esc(s.bibl)}</p>` : ''}</figure>`;
   const blockHtml = (b) => (b.song ? lyrHtml(b.song) : `<p class="dx">${b.t}</p>`);
+  /* ---- 関連する語 ---- */
+  const GENERIC = /(の名|の総称)$|^(固有名詞|名|助詞|接尾辞)$/;
+  const GL = new Map();                                   // 語釈（括弧を除いたもの）→ その語釈を持つ見出し
+  DATA.forEach((e) => {
+    const seen = new Set();
+    e.senses.forEach((s) => {
+      const c = s.ck;
+      if (!c || c.length > 12 || GENERIC.test(c) || seen.has(c)) return;
+      seen.add(c);
+      if (!GL.has(c)) GL.set(c, []);
+      GL.get(c).push(e);
+    });
+  });
+  const relChip = (x) => `<button class="rel-chip" type="button" data-rel="${esc(x.key)}"><b>${esc(x.orth)}</b><small>${esc(x.glosses[0] || '')}</small></button>`;
+  function relatedHtml(e) {
+    const CAP = 16, groups = [], R = e.rel || {};
+    const used = new Set([e]);
+    const add = (title, list) => {
+      if (!list.length) return;
+      const rest = list.length - CAP;
+      const chips = list.map((x, i) => (i < CAP ? relChip(x) : relChip(x).replace('class="rel-chip"', 'class="rel-chip rel-extra"'))).join('');
+      groups.push(`<div class="rel-g"><h4>${title}</h4><div class="rel-chips">${chips}${rest > 0 ? `<button class="rel-more" type="button" data-more="${rest}" aria-expanded="false">ほか${rest}語を表示</button>` : ''}</div></div>`);
+    };
+    const explicit = (k) => (R[k] || []).map((j) => DATA[j]).filter((x) => !used.has(x) && used.add(x));
+    add('対義語', explicit('a'));
+    add('同じ意味・近い意味（語釈に書かれているもの）', explicit('s'));
+    const seenGloss = new Set();
+    e.senses.forEach((s) => {
+      const c = s.ck;
+      if (!c || seenGloss.has(c) || !GL.has(c)) return;
+      seenGloss.add(c);
+      add(`同じ意味の語（語釈が「${esc(s.gloss.replace(/[(（][^)）]*[)）]/g, ''))}」）`, GL.get(c).filter((x) => !used.has(x) && x.k !== e.k && used.add(x)));
+    });
+    add('参照', explicit('r'));
+    add('別の言い方', explicit('o'));
+    const toks = [...new Set(e.senses.map((s) => s.ck).filter((c) => c && c.length <= 12 && !GENERIC.test(c)))];
+    if (e.k.length >= 2 && toks.length) {
+      const comp = DATA.filter((x) => x !== e && !used.has(x) && x.k.length > e.k.length && x.k.includes(e.k) && x.senses.some((s) => toks.some((t) => s.dk.includes(t))));
+      comp.sort((a, b) => a.k.length - b.k.length || a.i - b.i);
+      add('この語を含む語', comp);
+    }
+    return groups.length ? `<section class="related"><h3>関連する語</h3>${groups.join('')}</section>` : '';
+  }
   const circled = (n) => '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[n - 1] || String(n);
   function renderDetail(e) {
     const multi = e.senses.length > 1;
@@ -571,6 +626,7 @@ details.more .ex { margin-top: 14px; }
       <div class="d-audio">${e.na ? '<span class="file">この語の音声はありません</span>' : `${playBtn(e, 'big')}<button class="pill-btn" type="button" data-play="${e.i}" data-slow="1">ゆっくり</button><span class="file">${esc(audioName(e))}</span>`}</div>
       ${senses}
       ${(e.notes && e.notes.length) ? `<section class="enotes"><h3>注記</h3>${e.notes.map((n) => `<div class="enote">${n.map(blockHtml).join('')}</div>`).join('')}</section>` : ''}
+      ${relatedHtml(e)}
       <div class="d-meta">項目ID <code>${esc(e.id)}</code>${e.senses.some((s) => s.sub) ? '<br>この見出しには、同じ形の別項目（同形語）の語義も含まれています。' : ''}</div>
     </article>`;
     $('#detail').scrollTop = 0;
@@ -675,6 +731,15 @@ details.more .ex { margin-top: 14px; }
     if (o) select(o.dataset.open, { open: true });
   });
   $('#detail').addEventListener('click', (ev) => {
+    const mb = ev.target.closest('.rel-more');
+    if (mb) {
+      const box = mb.parentElement, open = box.classList.toggle('open');
+      mb.textContent = open ? '閉じる' : `ほか${mb.dataset.more}語を表示`;
+      mb.setAttribute('aria-expanded', String(open));
+      return;
+    }
+    const rl = ev.target.closest('[data-rel]');
+    if (rl) { select(rl.dataset.rel, { reveal: true }); return; }
     const x = ev.target.closest('[data-ex]');
     if (x) { playFile(x.dataset.ex, 'ex', false, x); return; }
     const p = ev.target.closest('[data-play]');
